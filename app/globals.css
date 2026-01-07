@@ -168,7 +168,7 @@
 @layer base {
 	body {
 		@apply bg-background-dark text-white font-sans;
-		min-height: max(884px, 100dvh);
+		min-height: 100dvh;
 	}
 	* {
 		@apply border-white/10;

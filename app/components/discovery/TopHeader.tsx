@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function TopHeader() {
 	return (
-		<div className="fixed top-0 left-0 w-full z-50 pointer-events-none">
+		<div className="absolute top-0 left-0 w-full z-50 pointer-events-none">
 			<div className="absolute inset-0 h-56 bg-gradient-to-b from-black via-black/80 to-transparent"></div>
 			<div className="absolute top-0 w-full pt-14 pb-2 px-4 flex flex-col gap-4 pointer-events-auto">
 				{/* Top Row: Search, Map, Auth */}

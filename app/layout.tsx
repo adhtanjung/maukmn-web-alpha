@@ -29,7 +29,7 @@ export default function RootLayout({
 					/>
 				</head>
 				<body
-					className={`${plusJakartaSans.variable} font-sans antialiased bg-black text-white overflow-hidden h-screen w-screen flex items-center justify-center`}
+					className={`${plusJakartaSans.variable} font-sans antialiased bg-black text-white overflow-hidden h-dvh w-screen flex items-center justify-center`}
 					suppressHydrationWarning
 				>
 					<div className="relative w-full h-full max-w-[430px] bg-background-dark overflow-hidden shadow-2xl">
