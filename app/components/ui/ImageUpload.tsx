@@ -90,7 +90,8 @@ export default function ImageUpload({
 				throw new Error("Failed to get upload URL");
 			}
 
-			const { upload_url, public_url } = await presignRes.json();
+			const response = await presignRes.json();
+			const { upload_url, public_url } = response.data;
 
 			// Upload directly to R2
 			setUploadState((s) => ({ ...s, progress: 70 }));

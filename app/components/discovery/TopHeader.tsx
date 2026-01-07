@@ -1,54 +1,108 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function TopHeader() {
 	return (
-		<div className="absolute top-0 left-0 w-full z-50 pointer-events-none">
-			<div className="absolute inset-0 h-40 bg-gradient-to-b from-black/90 to-transparent"></div>
-			<div className="absolute top-0 w-full p-4 pt-14 flex items-center justify-between pointer-events-auto px-5">
-				<Button className="flex items-center gap-2 h-11 pl-2 pr-4 rounded-full bg-black/40 backdrop-blur-md border border-white/10 active:scale-95 transition-all hover:bg-white/10 shadow-lg group">
-					<div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors border border-primary/20">
-						<span className="material-symbols-outlined !text-[16px] text-primary">
-							map
-						</span>
-					</div>
-					<span className="text-xs font-bold text-foreground uppercase tracking-wide">
-						Map View
-					</span>
-				</Button>
-				<div className="flex items-center gap-3">
-					<SignedOut>
-						<SignInButton mode="modal">
-							<Button className="h-11 px-4 flex items-center justify-center rounded-full bg-primary text-black font-bold text-sm shadow-lg active:scale-95 transition-all">
-								Sign In
-							</Button>
-						</SignInButton>
-					</SignedOut>
-					<SignedIn>
-						<UserButton
-							appearance={{
-								elements: {
-									avatarBox: "w-11 h-11 border border-white/10",
-								},
-							}}
-						/>
-					</SignedIn>
-
-					<Button
-						size="icon"
-						className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md border border-white/10 active:scale-95 transition-all text-foreground hover:bg-white/10 shadow-lg"
-					>
-						<span className="material-symbols-outlined !text-[22px]">
+		<div className="fixed top-0 left-0 w-full z-50 pointer-events-none">
+			<div className="absolute inset-0 h-56 bg-gradient-to-b from-black via-black/80 to-transparent"></div>
+			<div className="absolute top-0 w-full pt-14 pb-2 px-4 flex flex-col gap-4 pointer-events-auto">
+				{/* Top Row: Search, Map, Auth */}
+				<div className="flex items-center gap-3 w-full">
+					{/* Search Bar */}
+					<div className="flex-1 h-12 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center px-4 gap-3 shadow-lg active:scale-[0.99] transition-transform">
+						<span className="material-symbols-outlined text-white/50">
 							search
 						</span>
-					</Button>
-					<Button
-						size="icon"
-						className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md border border-white/10 active:scale-95 transition-all text-foreground hover:bg-white/10 shadow-lg relative"
-					>
-						<div className="absolute top-3 right-3 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-						<span className="material-symbols-outlined !text-[22px]">tune</span>
-					</Button>
+						<input
+							className="bg-transparent border-none outline-none text-white placeholder-white/50 text-[15px] font-medium w-full h-full p-0 focus:ring-0"
+							disabled
+							placeholder="Search places, categories..."
+							type="text"
+						/>
+					</div>
+
+					{/* Map Button */}
+					<Link href="/discovery/map">
+						<button className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white shadow-lg active:scale-95 transition-all hover:bg-white/20">
+							<span className="material-symbols-outlined">map</span>
+						</button>
+					</Link>
+
+					{/* Auth Button */}
+					<div className="w-12 h-12 flex items-center justify-center">
+						<SignedOut>
+							<SignInButton mode="modal">
+								<button
+									className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-primary shadow-lg active:scale-95 transition-all hover:bg-white/20"
+									title="Sign In"
+								>
+									<span className="material-symbols-outlined">login</span>
+								</button>
+							</SignInButton>
+						</SignedOut>
+						<SignedIn>
+							<UserButton
+								appearance={{
+									elements: {
+										avatarBox:
+											"w-12 h-12 rounded-2xl border border-white/10 shadow-lg",
+									},
+								}}
+							/>
+						</SignedIn>
+					</div>
+				</div>
+
+				{/* Bottom Row: Filters */}
+				<div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar w-full -mx-4 px-4 mask-linear-fade">
+					<button className="h-9 pl-1 pr-3 rounded-full bg-surface-dark border border-white/15 flex items-center gap-2 shrink-0 shadow-md active:scale-95 transition-transform hover:border-primary/50">
+						<div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
+							<span className="material-symbols-outlined text-primary text-[16px]!">
+								tune
+							</span>
+						</div>
+						<span className="text-xs font-bold text-white tracking-wide">
+							Filter (0)
+						</span>
+					</button>
+					<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
+						<span className="text-xs font-medium text-white/90">
+							All Categories
+						</span>
+						<span className="material-symbols-outlined text-white/60 text-[18px]!">
+							expand_more
+						</span>
+					</button>
+					<button className="h-9 pl-3.5 pr-2 rounded-full bg-white/5 border border-white/10 flex items-center gap-2 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
+						<span className="text-xs font-medium text-white/90">Open Now</span>
+						<span className="material-symbols-outlined text-primary text-[28px]! -my-1">
+							toggle_on
+						</span>
+					</button>
+					<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
+						<span className="text-xs font-medium text-white/90">Fast Wifi</span>
+						<span className="material-symbols-outlined text-white/60 text-[16px]!">
+							add
+						</span>
+					</button>
+					<div className="h-9 p-1 rounded-full bg-white/5 border border-white/10 flex items-center shrink-0 backdrop-blur-md">
+						<button className="w-8 h-full rounded-full bg-primary/20 border border-primary/30 text-white text-[11px] font-bold flex items-center justify-center hover:bg-primary/30 transition-colors shadow-sm">
+							$
+						</button>
+						<button className="w-8 h-full rounded-full text-white/40 text-[11px] font-medium flex items-center justify-center hover:bg-white/10 hover:text-white transition-colors">
+							$$
+						</button>
+						<button className="w-8 h-full rounded-full text-white/40 text-[11px] font-medium flex items-center justify-center hover:bg-white/10 hover:text-white transition-colors">
+							$$$
+						</button>
+					</div>
+					<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
+						<span className="text-xs font-medium text-white/90">Nearby</span>
+						<span className="material-symbols-outlined text-white/60 text-[18px]!">
+							expand_more
+						</span>
+					</button>
+					<div className="w-4 shrink-0"></div>
 				</div>
 			</div>
 		</div>

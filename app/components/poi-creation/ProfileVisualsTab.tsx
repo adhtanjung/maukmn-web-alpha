@@ -12,11 +12,11 @@ import type { POIFormData } from "@/app/contexts/POIFormContext";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-	{ id: "cafe", label: "Cafe", icon: "local_cafe" },
-	{ id: "restaurant", label: "Restaurant", icon: "restaurant" },
-	{ id: "coworking", label: "Coworking", icon: "work" },
-	{ id: "bar", label: "Bar", icon: "local_bar" },
-	{ id: "park", label: "Park", icon: "park" },
+	{ id: "category.cafe", label: "Cafe", icon: "local_cafe" },
+	{ id: "category.restaurant", label: "Restaurant", icon: "restaurant" },
+	{ id: "category.coworking", label: "Coworking", icon: "work" },
+	{ id: "category.bar", label: "Bar", icon: "local_bar" },
+	{ id: "category.park", label: "Park", icon: "park" },
 ] as const;
 
 const COVER_EXAMPLES = [
@@ -99,7 +99,7 @@ function GuidelineItem({
 			<span
 				className={cn(
 					"material-symbols-outlined text-sm mt-0.5",
-					type === "success" ? "text-green-500" : "text-destructive"
+					type === "success" ? "text-green-500" : "text-red-500"
 				)}
 			>
 				{icon}
@@ -165,7 +165,7 @@ export default function ProfileVisualsTab() {
 					{/* POI Name */}
 					<div className="flex flex-col w-full space-y-2">
 						<Label className="text-foreground text-sm font-medium ml-1">
-							POI Name <span className="text-destructive">*</span>
+							POI Name <span className="text-red-500">*</span>
 						</Label>
 						<Input
 							placeholder="e.g., The Grind Cafe"
@@ -174,9 +174,7 @@ export default function ProfileVisualsTab() {
 							{...register("name")}
 						/>
 						{errors.name && (
-							<p className="text-destructive text-xs ml-1">
-								{errors.name.message}
-							</p>
+							<p className="text-red-500 text-xs ml-1">{errors.name.message}</p>
 						)}
 					</div>
 
@@ -199,7 +197,7 @@ export default function ProfileVisualsTab() {
 					{/* Categories */}
 					<div className="flex flex-col w-full">
 						<Label className="text-foreground text-sm font-medium pb-3 ml-1">
-							Category <span className="text-destructive">*</span>
+							Category <span className="text-red-500">*</span>
 						</Label>
 						<Controller
 							name="categories"
@@ -237,7 +235,7 @@ export default function ProfileVisualsTab() {
 							)}
 						/>
 						{errors.categories && (
-							<p className="text-destructive text-xs ml-1 mt-2">
+							<p className="text-red-500 text-xs ml-1 mt-2">
 								{errors.categories.message}
 							</p>
 						)}
@@ -494,7 +492,7 @@ export default function ProfileVisualsTab() {
 										"flex items-center gap-2 px-3 py-1.5 rounded-full",
 										previewImage.isGood
 											? "bg-green-500/10 text-green-500"
-											: "bg-destructive/10 text-destructive"
+											: "bg-red-500/10 text-red-500"
 									)}
 								>
 									<span className="material-symbols-outlined text-lg">

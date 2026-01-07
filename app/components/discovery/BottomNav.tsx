@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 
 interface BottomNavProps {
 	onCreateClick?: () => void;
+	onProfileClick?: () => void;
 }
 
-export default function BottomNav({ onCreateClick }: BottomNavProps) {
+export default function BottomNav({
+	onCreateClick,
+	onProfileClick,
+}: BottomNavProps) {
 	const createButtonStyles =
 		"flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-primary-dark to-primary shadow-lg shadow-primary/30 active:scale-95 transition-transform border border-white/10 -mt-8 mb-2 ring-4 ring-background-dark hover:brightness-110";
 	return (
@@ -63,6 +67,7 @@ export default function BottomNav({ onCreateClick }: BottomNavProps) {
 				<Button
 					variant="ghost"
 					className="flex flex-col items-center justify-center gap-1 w-12 h-auto p-0 text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors group"
+					onClick={onProfileClick}
 				>
 					<span className="material-symbols-outlined !text-[28px] group-hover:scale-110 transition-transform">
 						person

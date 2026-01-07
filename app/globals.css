@@ -133,6 +133,10 @@
 
 	--color-background: var(--background);
 
+	--color-destructive: var(--destructive);
+
+	--color-destructive-foreground: var(--destructive-foreground);
+
 	--radius-sm: calc(var(--radius) - 4px);
 
 	--radius-md: calc(var(--radius) - 2px);
@@ -157,6 +161,10 @@
 	-webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
 }
 
+@utility filled {
+	font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
 @layer base {
 	body {
 		@apply bg-background-dark text-white font-sans;
@@ -167,11 +175,11 @@
 	}
 	.maplibregl-popup-content {
 		@apply bg-transparent! shadow-none! p-0! rounded-none!;
-    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+		@apply bg-transparent! shadow-none! p-0! rounded-none!;
 	}
 	.maplibregl-popup-tip {
 		@apply hidden!;
-    @apply hidden!;
+		@apply hidden!;
 	}
 }
 
@@ -230,6 +238,8 @@
 	--primary-900: oklch(0.3891 0.0796 156.23);
 	--primary-950: oklch(0.2646 0.0541 157.13);
 	--primary-1000: oklch(0.1835 0.0372 157.63);
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
 	--radius: 0.75rem;
 }
 
@@ -264,4 +274,6 @@
 	--sidebar-accent-foreground: oklch(0.922 0 0);
 	--sidebar-border: oklch(0.269 0 0);
 	--sidebar-ring: oklch(0.6629 0.1602 152.37);
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
 }
