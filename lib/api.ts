@@ -9,20 +9,18 @@ export const useAuthenticatedFetch = () => {
 
 	const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 		const token = await getToken();
-		const headers = {
-			...options.headers,
-			Authorization: `Bearer ${token}`,
-		};
+		const headers = new Headers(options.headers);
+		headers.set("Authorization", `Bearer ${token}`);
 
 		// Ensure Content-Type is set if body is present and it's JSON
 		// Note: This is a basic implementation, extend as needed
 		if (
 			options.body &&
-			!headers["Content-Type"] &&
+			!headers.has("Content-Type") &&
 			typeof options.body === "string"
 		) {
 			// Simple assumption, reliable handling should check if it's actually JSON
-			// headers['Content-Type'] = 'application/json';
+			// headers.set('Content-Type', 'application/json');
 		}
 
 		return fetch(url, { ...options, headers });

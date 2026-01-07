@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
@@ -95,11 +95,13 @@ export default function EditPOIPage() {
 	return (
 		<main className="h-full w-full bg-background-dark relative">
 			<POIFormProvider initialData={initialData} initialDraftId={poiId}>
-				<CreatePOIOverlay
-					onClose={() => router.back()}
-					mode="edit"
-					initialTitle="Edit POI"
-				/>
+				<Suspense fallback={null}>
+					<CreatePOIOverlay
+						onClose={() => router.back()}
+						mode="edit"
+						initialTitle="Edit POI"
+					/>
+				</Suspense>
 			</POIFormProvider>
 		</main>
 	);

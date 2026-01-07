@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
 import useSWR from "swr";
@@ -32,9 +33,9 @@ const fetcher = async (url: string, token: string | null) => {
 export default function POIApprovalsPage() {
 	const router = useRouter();
 	const { getToken } = useAuth();
-	const [filter, setFilter] = useState<"pending" | "approved" | "rejected">(
-		"pending"
-	);
+	const [filter, setFilter] = useState<
+		"pending" | "approved" | "rejected" | "reviewed"
+	>("pending");
 
 	// Map UI filter to API status value
 	// "reviewed" in UI -> "approved" in API for simplicity, or we check if we want explicit 'reviewed' state?
@@ -44,7 +45,7 @@ export default function POIApprovalsPage() {
 
 	const apiStatus = filter === "reviewed" ? "approved" : filter;
 
-	const { data, error, mutate } = useSWR(
+	const { data, mutate } = useSWR(
 		[
 			`${
 				process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
@@ -58,7 +59,7 @@ export default function POIApprovalsPage() {
 	);
 
 	const pois: POI[] = data?.data || [];
-	const count = data?.meta?.total || data?.count || 0;
+	// const count = data?.meta?.total || data?.count || 0;
 
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -181,10 +182,13 @@ export default function POIApprovalsPage() {
 								<div className="flex-1 flex items-center gap-3 min-w-0">
 									<div className="w-14 h-14 rounded-lg bg-slate-200 dark:bg-white/5 shrink-0 overflow-hidden relative">
 										{poi.cover_image_url ? (
-											<img
+											<Image
 												alt={poi.name}
 												className="w-full h-full object-cover"
 												src={poi.cover_image_url}
+												width={56}
+												height={56}
+												unoptimized
 											/>
 										) : (
 											<div className="w-full h-full flex items-center justify-center bg-white/10">

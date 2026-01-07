@@ -56,8 +56,8 @@ export default function LocationTab() {
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 	const [autocompleteDisabled, setAutocompleteDisabled] = useState(false);
 
-	const debounceTimer = useRef<NodeJS.Timeout>();
-	const reverseGeocodeTimer = useRef<NodeJS.Timeout>();
+	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+	const reverseGeocodeTimer = useRef<NodeJS.Timeout | null>(null);
 
 	// Helper: Update coordinates in one place
 	const updateCoordinates = useCallback(
@@ -137,7 +137,7 @@ export default function LocationTab() {
 
 				const data = await response.json();
 				const results: AddressSuggestion[] =
-					data.features?.map((f: any) => ({
+					data.features?.map((f: { properties: AddressSuggestion }) => ({
 						formatted: f.properties.formatted,
 						lat: f.properties.lat,
 						lon: f.properties.lon,

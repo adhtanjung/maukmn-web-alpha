@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Map,
@@ -353,7 +353,7 @@ function MapContent({
 	);
 }
 
-export default function DiscoveryMapPage() {
+function DiscoveryMapContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [pois, setPois] = useState<POI[]>([]);
@@ -1133,5 +1133,13 @@ export default function DiscoveryMapPage() {
 				onCreateClick={() => router.push("/create-poi")}
 			/>
 		</main>
+	);
+}
+
+export default function DiscoveryMapPage() {
+	return (
+		<Suspense fallback={null}>
+			<DiscoveryMapContent />
+		</Suspense>
 	);
 }
