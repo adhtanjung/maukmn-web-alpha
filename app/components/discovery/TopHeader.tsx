@@ -1,7 +1,46 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { FilterDrawer } from "./FilterDrawer";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FilterState } from "@/app/hooks/useFilters";
 
-export default function TopHeader() {
+interface TopHeaderProps {
+	filters?: FilterState;
+	onFiltersChange?: (filters: FilterState) => void;
+	onApply?: () => void;
+	onReset?: () => void;
+	resultCount?: number;
+	loading?: boolean;
+}
+
+export default function TopHeader({
+	filters,
+	onFiltersChange,
+	onApply,
+	onReset,
+	resultCount,
+	loading,
+}: TopHeaderProps) {
+	// Calculate active filter count
+	const activeFilterCount = filters
+		? (filters.priceRange !== 2 ? 1 : 0) + // Default price is 2 ($$)
+		  (filters.wifiQuality ? 1 : 0) +
+		  (filters.noiseLevel ? 1 : 0) +
+		  (filters.powerOutlets ? 1 : 0) +
+		  (filters.vibes?.length || 0) +
+		  (filters.crowdType?.length || 0) +
+		  (filters.dietaryOptions?.length || 0) +
+		  (filters.seatingOptions?.length || 0) +
+		  (filters.parkingOptions?.length || 0) +
+		  (filters.hasAC !== null ? 1 : 0) +
+		  (filters.cuisine ? 1 : 0)
+		: 0;
+
 	return (
 		<div className="absolute top-0 left-0 w-full z-50 pointer-events-none">
 			<div className="absolute inset-0 h-56 bg-gradient-to-b from-black via-black/80 to-transparent"></div>
@@ -55,16 +94,48 @@ export default function TopHeader() {
 
 				{/* Bottom Row: Filters */}
 				<div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar w-full -mx-4 px-4 mask-linear-fade">
-					<button className="h-9 pl-1 pr-3 rounded-full bg-surface-dark border border-white/15 flex items-center gap-2 shrink-0 shadow-md active:scale-95 transition-transform hover:border-primary/50">
-						<div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
-							<span className="material-symbols-outlined text-primary text-[16px]!">
-								tune
+					<FilterDrawer
+						filters={filters}
+						onFiltersChange={onFiltersChange}
+						onApply={onApply}
+						onReset={onReset}
+						resultCount={resultCount}
+						loading={loading}
+					>
+						<button className="h-9 pl-1 pr-3 rounded-full bg-surface-dark border border-white/15 flex items-center gap-2 shrink-0 shadow-md active:scale-95 transition-transform hover:border-primary/50">
+							<div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
+								<span className="material-symbols-outlined text-primary text-[16px]!">
+									tune
+								</span>
+							</div>
+							<span className="text-xs font-bold text-white tracking-wide">
+								Filter ({activeFilterCount})
 							</span>
-						</div>
-						<span className="text-xs font-bold text-white tracking-wide">
-							Filter (0)
-						</span>
-					</button>
+						</button>
+					</FilterDrawer>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
+								<span className="text-xs font-medium text-white/90">
+									Sort By
+								</span>
+								<span className="material-symbols-outlined text-white/60 text-[18px]!">
+									sort
+								</span>
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent className="bg-background-dark border-white/10 text-white min-w-[150px]">
+							<DropdownMenuItem className="text-xs font-medium focus:bg-white/10 focus:text-white cursor-pointer">
+								Recommended
+							</DropdownMenuItem>
+							<DropdownMenuItem className="text-xs font-medium focus:bg-white/10 focus:text-white cursor-pointer">
+								Nearest
+							</DropdownMenuItem>
+							<DropdownMenuItem className="text-xs font-medium focus:bg-white/10 focus:text-white cursor-pointer">
+								Top Rated
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 					<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
 						<span className="text-xs font-medium text-white/90">
 							All Categories

@@ -1,11 +1,12 @@
 "use client";
 
 import { useAppUser } from "@/app/hooks/useAppUser";
-import { usePOIs } from "@/app/hooks/usePOIs";
+import { useFilteredPOIs } from "@/app/hooks/useFilters";
 import { useRouter } from "next/navigation";
 import TopHeader from "./components/discovery/TopHeader";
 import POICard from "./components/discovery/POICard";
 import BottomNav from "./components/discovery/BottomNav";
+import { useFilters } from "@/app/hooks/useFilters";
 
 // Loading skeleton component
 function POICardSkeleton() {
@@ -32,9 +33,9 @@ function EmptyState() {
 			<span className="material-symbols-outlined text-6xl text-muted-foreground">
 				explore_off
 			</span>
-			<h2 className="text-xl font-bold text-foreground">No places yet</h2>
+			<h2 className="text-xl font-bold text-foreground">No places found</h2>
 			<p className="text-muted-foreground text-sm">
-				Be the first to add a place! Tap the + button below to contribute.
+				Try adjusting your filters to see more results.
 			</p>
 		</div>
 	);
@@ -43,7 +44,25 @@ function EmptyState() {
 export default function Home() {
 	const router = useRouter();
 	const { isAdmin } = useAppUser();
-	const { pois, loading, error } = usePOIs("approved");
+
+	// Use filter hook
+	const { filters, updateFilter, resetFilters, queryString } = useFilters({
+		sortBy: "recommended",
+		priceRange: 2,
+		wifiQuality: "",
+		noiseLevel: "",
+		powerOutlets: "",
+		vibes: [],
+		crowdType: [],
+		dietaryOptions: [],
+		seatingOptions: [],
+		parkingOptions: [],
+		hasAC: null,
+		cuisine: null,
+	});
+
+	// Use filtered POIs hook
+	const { pois, loading, error, total } = useFilteredPOIs(queryString);
 
 	const handleCreateClick = () => {
 		router.push("/create-poi");
@@ -60,7 +79,22 @@ export default function Home() {
 
 	return (
 		<main className="h-full w-full bg-background-dark overflow-hidden relative">
-			<TopHeader />
+			<TopHeader
+				filters={filters}
+				onFiltersChange={(newFilters) => {
+					// Batch update filters
+					Object.entries(newFilters).forEach(([key, value]) => {
+						updateFilter(key as any, value);
+					});
+				}}
+				onApply={() => {
+					// The hooks automatically update via queryString, so explicit apply isn't strictly needed for fetching,
+					// but can be used for UI feedback or closing drawers if managed here.
+				}}
+				onReset={resetFilters}
+				resultCount={total}
+				loading={loading}
+			/>
 
 			<div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar scroll-smooth relative">
 				{loading ? (
