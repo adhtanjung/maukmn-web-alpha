@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { POI } from "@/app/hooks/usePOIs";
@@ -20,6 +22,11 @@ interface POICardProps {
 	onMoreClick?: () => void;
 }
 
+const swipeConfidenceThreshold = 10000;
+const swipePower = (offset: number, velocity: number) => {
+	return Math.abs(offset) * velocity;
+};
+
 export default function POICard({
 	poi,
 	distance = "Nearby",
@@ -29,6 +36,17 @@ export default function POICard({
 }: POICardProps) {
 	const router = useRouter();
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
+	const [direction, setDirection] = useState(0);
+	const isDragging = useRef(false);
+
+	// Helper to handle navigation
+	const paginate = (newDirection: number) => {
+		const nextIndex = currentImageIndex + newDirection;
+		if (nextIndex >= 0 && nextIndex < allImages.length) {
+			setDirection(newDirection);
+			setCurrentImageIndex(nextIndex);
+		}
+	};
 
 	// Get all images (cover + gallery)
 	const allImages = [
@@ -54,8 +72,8 @@ export default function POICard({
 		? [featuredBadge, ...dynamicBadges.slice(0, 2)]
 		: dynamicBadges;
 
-	// Gallery navigation handlers
 	const handleImageTap = (e: React.MouseEvent<HTMLDivElement>) => {
+		if (isDragging.current) return;
 		if (allImages.length <= 1) return;
 
 		const rect = e.currentTarget.getBoundingClientRect();
@@ -63,10 +81,10 @@ export default function POICard({
 		const isLeftTap = tapX < rect.width / 3;
 		const isRightTap = tapX > (rect.width * 2) / 3;
 
-		if (isLeftTap && currentImageIndex > 0) {
-			setCurrentImageIndex(currentImageIndex - 1);
-		} else if (isRightTap && currentImageIndex < allImages.length - 1) {
-			setCurrentImageIndex(currentImageIndex + 1);
+		if (isLeftTap) {
+			paginate(-1);
+		} else if (isRightTap) {
+			paginate(1);
 		}
 	};
 
@@ -87,14 +105,86 @@ export default function POICard({
 		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden">
 			{/* Hero Image with Tap Zones for Gallery */}
 			<div
-				className="absolute inset-0 w-full h-full bg-cover bg-center cursor-pointer"
-				style={{ backgroundImage: `url("${currentImage}")` }}
+				className="absolute inset-0 w-full h-full cursor-pointer group bg-zinc-900"
 				onClick={handleImageTap}
-			/>
+				role="button"
+				tabIndex={0}
+				onKeyDown={(e) => {
+					if (e.key === "ArrowLeft") {
+						setDirection(-1);
+						setCurrentImageIndex(Math.max(0, currentImageIndex - 1));
+					}
+					if (e.key === "ArrowRight") {
+						setDirection(1);
+						setCurrentImageIndex(
+							Math.min(allImages.length - 1, currentImageIndex + 1)
+						);
+					}
+				}}
+			>
+				<AnimatePresence initial={false} custom={direction}>
+					<motion.div
+						key={currentImage}
+						custom={direction}
+						variants={{
+							enter: (direction: number) => ({
+								x: direction > 0 ? "100%" : "-100%",
+								opacity: 0,
+							}),
+							center: {
+								zIndex: 1,
+								x: 0,
+								opacity: 1,
+							},
+							exit: (direction: number) => ({
+								zIndex: 0,
+								x: direction < 0 ? "100%" : "-100%",
+								opacity: 0,
+							}),
+						}}
+						initial="enter"
+						animate="center"
+						exit="exit"
+						transition={{
+							x: { type: "spring", stiffness: 300, damping: 30 },
+							opacity: { duration: 0.2 },
+						}}
+						className="absolute inset-0 w-full h-full"
+						drag="x"
+						dragConstraints={{ left: 0, right: 0 }}
+						dragElastic={1}
+						onDragStart={() => {
+							isDragging.current = true;
+						}}
+						onDragEnd={(e, { offset, velocity }) => {
+							const swipe = swipePower(offset.x, velocity.x);
+
+							if (swipe < -swipeConfidenceThreshold) {
+								paginate(1);
+							} else if (swipe > swipeConfidenceThreshold) {
+								paginate(-1);
+							}
+
+							setTimeout(() => {
+								isDragging.current = false;
+							}, 50);
+						}}
+					>
+						<Image
+							src={currentImage}
+							alt={poi.name}
+							fill
+							className="object-cover"
+							sizes="(max-width: 768px) 100vw, 430px"
+							priority={distance === "Nearby"}
+						/>
+					</motion.div>
+				</AnimatePresence>
+			</div>
 
 			{/* Gallery Indicators */}
 			{allImages.length > 1 && (
-				<div className="absolute top-20 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
+				<div className="absolute top-44 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
 					{allImages.map((_, idx) => (
 						<div
 							key={idx}
@@ -249,12 +339,16 @@ export default function POICard({
 				{/* Description */}
 				<p className="text-white/80 text-[13px] leading-relaxed line-clamp-2 max-w-[85%] font-medium drop-shadow-md">
 					{poi.description || "Discover this amazing place."}
-					<span
-						onClick={onMoreClick}
-						className="text-white font-bold underline decoration-white/30 underline-offset-2 ml-1 cursor-pointer"
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							onMoreClick?.();
+						}}
+						className="text-white font-bold underline decoration-white/30 underline-offset-2 ml-1 cursor-pointer hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded-sm"
 					>
 						more
-					</span>
+					</button>
 				</p>
 
 				{/* Dynamic Amenity Chips */}
