@@ -43,8 +43,8 @@ export default function TopHeader({
 
 	return (
 		<div className="absolute top-0 left-0 w-full z-50 pointer-events-none">
-			<div className="absolute inset-0 h-56 bg-gradient-to-b from-black via-black/80 to-transparent"></div>
-			<div className="absolute top-0 w-full pt-14 pb-2 px-4 flex flex-col gap-4 pointer-events-auto">
+			<div className="absolute inset-0 h-32 bg-gradient-to-b from-black/80 via-black/40 to-transparent"></div>
+			<div className="absolute top-0 w-full pt-4 pb-2 px-4 flex flex-col gap-3 pointer-events-auto">
 				{/* Top Row: Search, Map, Auth */}
 				<div className="flex items-center gap-3 w-full">
 					{/* Search Bar */}

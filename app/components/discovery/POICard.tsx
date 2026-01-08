@@ -105,7 +105,7 @@ export default function POICard({
 		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden">
 			{/* Hero Image with Tap Zones for Gallery */}
 			<div
-				className="absolute inset-0 w-full h-full cursor-pointer group bg-zinc-900"
+				className="absolute inset-0 w-full h-full cursor-pointer group bg-card"
 				onClick={handleImageTap}
 				role="button"
 				tabIndex={0}
@@ -200,14 +200,15 @@ export default function POICard({
 			<div className="absolute bottom-0 left-0 w-full h-[40%] bg-(image:--image-gradient-fade) pointer-events-none" />
 
 			{/* Action Buttons */}
-			<div className="absolute right-4 bottom-28 flex flex-col items-center gap-5 z-20 pb-6">
+			<div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-20">
 				<div className="flex flex-col items-center gap-1">
 					<Button
 						variant="ghost"
 						size="icon"
-						className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10 group"
+						aria-label="Toggle favorite"
+						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10 group"
 					>
-						<span className="material-symbols-outlined text-white text-[26px]! group-hover:text-red-500 transition-colors">
+						<span className="material-symbols-outlined text-white text-[26px]! group-hover:text-destructive transition-colors">
 							favorite
 						</span>
 					</Button>
@@ -219,7 +220,8 @@ export default function POICard({
 					<Button
 						variant="ghost"
 						size="icon"
-						className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
+						aria-label="View comments"
+						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
 					>
 						<span className="material-symbols-outlined text-white text-[26px]!">
 							chat_bubble
@@ -233,35 +235,31 @@ export default function POICard({
 					<Button
 						variant="ghost"
 						size="icon"
-						className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
+						aria-label="Get directions"
+						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
 						onClick={handleDirections}
 					>
 						<span className="material-symbols-outlined text-white text-[26px]!">
 							directions
 						</span>
 					</Button>
-					<span className="text-xs font-semibold text-white/90 drop-shadow-md">
-						Go
-					</span>
 				</div>
 				<div className="flex flex-col items-center gap-1">
 					<Button
 						variant="ghost"
 						size="icon"
-						className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
+						aria-label="Share"
+						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
 					>
 						<span className="material-symbols-outlined text-white text-[26px]!">
 							share
 						</span>
 					</Button>
-					<span className="text-xs font-semibold text-white/90 drop-shadow-md">
-						Share
-					</span>
 				</div>
 			</div>
 
 			{/* POI Info */}
-			<div className="absolute bottom-2 w-full px-5 pb-[110px] z-10 flex flex-col gap-3">
+			<div className="absolute bottom-24 w-full px-5 z-10 flex flex-col gap-3">
 				<div className="flex flex-col gap-1.5">
 					{/* Title Row with Workability Score */}
 					<div className="flex items-start justify-between pr-16">
@@ -286,73 +284,50 @@ export default function POICard({
 					</div>
 
 					{/* Meta Row: Rating, Category, Distance, Status */}
-					<div className="flex items-center flex-wrap gap-2 text-white/90 text-sm font-medium">
-						<Badge
-							variant="outline"
-							className="flex items-center gap-1 bg-black/30 backdrop-blur-sm border-white/5"
-						>
-							<span className="material-symbols-outlined text-primary text-[16px]! pb-0.5">
+					<div className="flex items-center flex-wrap gap-2 text-white/90 text-[13px] font-medium drop-shadow-md">
+						<div className="flex items-center gap-1">
+							<span className="material-symbols-outlined text-primary text-[16px]!">
 								star
 							</span>
-							<span className="text-white text-xs font-bold">4.5</span>
-						</Badge>
-						<span className="w-1 h-1 rounded-full bg-white/40" />
-						<span>{category}</span>
-						<span className="w-1 h-1 rounded-full bg-white/40" />
-						<div className="flex items-center gap-1">
-							<span className="material-symbols-outlined text-[16px]! text-primary">
-								location_on
-							</span>
-							<span className="text-primary text-xs font-bold uppercase tracking-wide">
-								{distance}
-							</span>
+							<span className="font-bold">4.5</span>
 						</div>
-						{/* Open Status */}
+						<span className="text-white/60">•</span>
+						<span>{category}</span>
+						<span className="text-white/60">•</span>
+						<span>{distance}</span>
 						{openStatus.statusText !== "Hours unavailable" && (
 							<>
-								<span className="w-1 h-1 rounded-full bg-white/40" />
-								<div className="flex items-center gap-1">
-									<span
-										className={`w-2 h-2 rounded-full ${
-											openStatus.isOpen
-												? "bg-primary animate-pulse"
-												: "bg-red-500"
-										}`}
-									/>
-									<span
-										className={`text-xs font-medium ${
-											openStatus.isOpen ? "text-primary" : "text-red-400"
-										}`}
-									>
-										{openStatus.isOpen
-											? openStatus.closesAt
-												? `Until ${openStatus.closesAt}`
-												: "Open"
-											: "Closed"}
-									</span>
-								</div>
+								<span className="text-white/60">•</span>
+								<span
+									className={`${
+										openStatus.isOpen ? "text-primary" : "text-destructive"
+									}`}
+								>
+									{openStatus.isOpen ? "Open" : "Closed"}
+								</span>
 							</>
 						)}
 					</div>
 				</div>
 
 				{/* Description */}
-				<p className="text-white/80 text-[13px] leading-relaxed line-clamp-2 max-w-[85%] font-medium drop-shadow-md">
+				<p className="text-white/80 text-[13px] leading-relaxed line-clamp-2 max-w-[95%] font-medium drop-shadow-md">
 					{poi.description || "Discover this amazing place."}
-					<button
-						type="button"
+					<Button
+						variant="link"
+						size="sm"
 						onClick={(e) => {
 							e.stopPropagation();
 							onMoreClick?.();
 						}}
-						className="text-white font-bold underline decoration-white/30 underline-offset-2 ml-1 cursor-pointer hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded-sm"
+						className="p-0 h-auto font-bold text-white underline decoration-white/30 underline-offset-2 ml-1 cursor-pointer hover:text-primary transition-colors focus:outline-hidden"
 					>
 						more
-					</button>
+					</Button>
 				</p>
 
 				{/* Dynamic Amenity Chips */}
-				<div className="flex gap-2.5 overflow-x-auto no-scrollbar pt-2 mask-linear-fade">
+				<div className="flex gap-2.5 overflow-x-auto no-scrollbar pt-1 mask-linear-fade">
 					{allBadges.map((badge, idx) => (
 						<Badge
 							key={idx}

@@ -13,8 +13,8 @@ export default function BottomNav({
 	const createButtonStyles =
 		"flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-primary-dark to-primary shadow-lg shadow-primary/30 active:scale-95 transition-transform border border-white/10 -mt-8 mb-2 ring-4 ring-background-dark hover:brightness-110";
 	return (
-		<div className="absolute bottom-8 left-5 right-5 z-50">
-			<div className="bg-surface-dark/95 backdrop-blur-2xl border border-white/10 rounded-full h-[72px] shadow-2xl shadow-black/60 flex items-center justify-between px-6">
+		<div className="absolute bottom-1 left-5 right-5 z-50">
+			<div className="bg-surface-dark/95 backdrop-blur-2xl border border-white/10 rounded-full h-[64px] shadow-2xl shadow-black/60 flex items-center justify-between px-6">
 				<Button
 					variant="ghost"
 					className="flex flex-col items-center justify-center gap-1 w-12 h-auto p-0 hover:bg-transparent group"

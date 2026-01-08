@@ -13,7 +13,7 @@ function POICardSkeleton() {
 	return (
 		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden bg-surface-dark animate-pulse">
 			<div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-			<div className="absolute bottom-0 w-full px-5 pb-[110px] z-10 flex flex-col gap-3">
+			<div className="absolute bottom-0 w-full px-5 pb-[100px] z-10 flex flex-col gap-3">
 				<div className="h-8 w-3/4 bg-white/10 rounded" />
 				<div className="h-4 w-1/2 bg-white/10 rounded" />
 				<div className="h-12 w-full bg-white/10 rounded" />
