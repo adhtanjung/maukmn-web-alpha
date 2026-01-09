@@ -160,7 +160,7 @@ export default function AtmosphereTab() {
 						<div
 							role="radiogroup"
 							aria-label="Lighting options"
-							className="grid grid-cols-2 gap-4 sm:flex bg-zinc-950 border border-zinc-900 rounded-3xl p-4"
+							className="grid grid-cols-2 gap-4 sm:flex bg-card border border-border rounded-3xl p-4"
 						>
 							{LIGHTING_OPTIONS.map((option) => {
 								const isSelected = field.value === option.value;
@@ -177,8 +177,8 @@ export default function AtmosphereTab() {
                                     relative group flex-1 h-40 flex-col justify-end pb-4 rounded-2xl overflow-hidden border transition-all duration-300
                                     ${
 																			isSelected
-																				? "border-zinc-700 bg-zinc-900/50"
-																				: "border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/30"
+																				? "border-primary/50 bg-primary/5"
+																				: "border-border/50 hover:border-border hover:bg-muted/30"
 																		}
                                 `}
 									>
@@ -205,7 +205,7 @@ export default function AtmosphereTab() {
                                             ${
 																							isSelected
 																								? option.bulbClass
-																								: "bg-zinc-800"
+																								: "bg-muted-foreground/20"
 																						}
                                         `}
 											/>
@@ -222,14 +222,18 @@ export default function AtmosphereTab() {
 										<div className="relative z-10 flex flex-col items-center gap-2">
 											<span
 												className={`material-symbols-outlined text-3xl transition-colors duration-300 ${
-													isSelected ? option.iconColor : "text-zinc-600"
+													isSelected
+														? option.iconColor
+														: "text-muted-foreground"
 												}`}
 											>
 												{option.icon}
 											</span>
 											<span
 												className={`text-sm font-semibold tracking-wide transition-colors duration-300 ${
-													isSelected ? option.textColor : "text-zinc-600"
+													isSelected
+														? option.textColor
+														: "text-muted-foreground"
 												}`}
 											>
 												{option.label}
