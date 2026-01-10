@@ -241,5 +241,26 @@ describe("LocationTab", () => {
 				expect(screen.queryByText("Latitude")).not.toBeInTheDocument();
 			});
 		});
+		it("should allow manual editing of lat/long", async () => {
+			const user = userEvent.setup();
+			render(<LocationTab />);
+
+			const overrideSwitch = screen.getByLabelText("Manual Override");
+			await user.click(overrideSwitch);
+
+			const latInput = screen.getByLabelText("Latitude");
+			const lngInput = screen.getByLabelText("Longitude");
+
+			await user.clear(latInput);
+			await user.type(latInput, "10.5");
+
+			await user.clear(lngInput);
+			await user.type(lngInput, "100.5");
+
+			await waitFor(() => {
+				expect(latInput).toHaveValue(10.5);
+				expect(lngInput).toHaveValue(100.5);
+			});
+		});
 	});
 });

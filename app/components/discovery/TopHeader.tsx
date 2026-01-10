@@ -1,4 +1,3 @@
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { FilterDrawer } from "./FilterDrawer";
 import {
@@ -66,30 +65,6 @@ export default function TopHeader({
 							<span className="material-symbols-outlined">map</span>
 						</button>
 					</Link>
-
-					{/* Auth Button */}
-					<div className="w-12 h-12 flex items-center justify-center">
-						<SignedOut>
-							<SignInButton mode="modal">
-								<button
-									className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-primary shadow-lg active:scale-95 transition-all hover:bg-white/20"
-									title="Sign In"
-								>
-									<span className="material-symbols-outlined">login</span>
-								</button>
-							</SignInButton>
-						</SignedOut>
-						<SignedIn>
-							<UserButton
-								appearance={{
-									elements: {
-										avatarBox:
-											"w-12 h-12 rounded-2xl border border-white/10 shadow-lg",
-									},
-								}}
-							/>
-						</SignedIn>
-					</div>
 				</div>
 
 				{/* Bottom Row: Filters */}

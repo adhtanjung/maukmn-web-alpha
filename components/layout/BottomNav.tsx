@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -70,16 +70,52 @@ export default function BottomNav() {
 					</span>
 				</Button>
 
-				<Button
-					variant="ghost"
-					className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
-					onClick={() => router.push("/profile")}
-				>
-					<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
-						person
-					</span>
-				</Button>
+				{/* Profile / Auth Button */}
+				<div className="flex flex-col items-center justify-center w-12 h-12">
+					<SignedOut>
+						<SignInButton mode="modal">
+							<Button
+								variant="ghost"
+								className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
+								title="Sign In"
+							>
+								<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
+									login
+								</span>
+							</Button>
+						</SignInButton>
+					</SignedOut>
+					<SignedIn>
+						<ProfileButton />
+					</SignedIn>
+				</div>
 			</div>
 		</div>
+	);
+}
+
+function ProfileButton() {
+	const { user } = useUser();
+	const router = useRouter();
+
+	return (
+		<Button
+			variant="ghost"
+			className="w-8 h-8 rounded-full p-0 overflow-hidden border border-border shadow-sm hover:opacity-80 transition-opacity"
+			onClick={() => router.push("/profile")}
+			title="Go to Profile"
+		>
+			{user?.imageUrl ? (
+				<img
+					src={user.imageUrl}
+					alt="Profile"
+					className="w-full h-full object-cover"
+				/>
+			) : (
+				<span className="material-symbols-outlined text-2xl text-muted-foreground">
+					person
+				</span>
+			)}
+		</Button>
 	);
 }

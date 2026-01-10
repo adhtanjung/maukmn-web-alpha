@@ -346,19 +346,51 @@ export default function LocationTab() {
 				{isAddressOverridden && (
 					<div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
 						<div>
-							<Label className="text-xs text-muted-foreground">Latitude</Label>
+							<Label
+								htmlFor="latitude"
+								className="text-xs text-muted-foreground"
+							>
+								Latitude
+							</Label>
 							<Input
-								value={currentLat || ""}
-								readOnly
+								id="latitude"
+								type="number"
+								step="any"
+								placeholder="-6.208763"
 								className="bg-muted font-mono text-sm h-10"
+								{...register("latitude", { valueAsNumber: true })}
+								onChange={(e) => {
+									const val = parseFloat(e.target.value);
+									if (!isNaN(val)) {
+										setValue("latitude", val);
+										setMarkerPosition([currentLng || 0, val]);
+										setMapCenter([currentLng || 0, val]);
+									}
+								}}
 							/>
 						</div>
 						<div>
-							<Label className="text-xs text-muted-foreground">Longitude</Label>
+							<Label
+								htmlFor="longitude"
+								className="text-xs text-muted-foreground"
+							>
+								Longitude
+							</Label>
 							<Input
-								value={currentLng || ""}
-								readOnly
+								id="longitude"
+								type="number"
+								step="any"
+								placeholder="106.845599"
 								className="bg-muted font-mono text-sm h-10"
+								{...register("longitude", { valueAsNumber: true })}
+								onChange={(e) => {
+									const val = parseFloat(e.target.value);
+									if (!isNaN(val)) {
+										setValue("longitude", val);
+										setMarkerPosition([val, currentLat || 0]);
+										setMapCenter([val, currentLat || 0]);
+									}
+								}}
 							/>
 						</div>
 					</div>
