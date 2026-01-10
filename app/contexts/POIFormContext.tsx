@@ -22,7 +22,7 @@ interface POIFormContextType {
 	draftId: string | null;
 	isSaving: boolean;
 	lastSaved: Date | null;
-	saveDraft: () => Promise<void>;
+	saveDraft: () => Promise<string | null>;
 	saveSection: (sectionName: string) => Promise<void>;
 	fetchSection: (sectionName: string) => Promise<void>;
 	submitForReview: () => Promise<ApiResponse<unknown>>;
@@ -112,7 +112,7 @@ export function POIFormProvider({
 		return () => subscription.unsubscribe();
 	}, [form, draftId, initialData]);
 
-	const saveDraft = useCallback(async () => {
+	const saveDraft = useCallback(async (): Promise<string | null> => {
 		const formData = form.getValues();
 		setIsSaving(true);
 		try {
@@ -185,10 +185,13 @@ export function POIFormProvider({
 			if (!response.ok) throw new Error("Failed to save");
 
 			const data = await response.json();
+			let currentDraftId = draftId;
 			if (!draftId && data.data?.poi_id) {
 				setDraftId(data.data.poi_id);
+				currentDraftId = data.data.poi_id;
 			}
 			setLastSaved(new Date());
+			return currentDraftId;
 		} catch (error) {
 			console.error("Save draft error:", error);
 			throw error;
@@ -225,15 +228,23 @@ export function POIFormProvider({
 		}
 
 		// Always save draft before submitting to ensure latest changes are captured
-		await saveDraft();
+		// saveDraft returns the ID, which is crucial when creating a new POI
+		const currentDraftId = await saveDraft();
+
+		if (!currentDraftId) {
+			throw new Error("Failed to create POI before submission");
+		}
 
 		const token = await getToken();
-		const response = await fetch(`${API_URL}/api/v1/pois/${draftId}/submit`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${token}`,
-			},
-		});
+		const response = await fetch(
+			`${API_URL}/api/v1/pois/${currentDraftId}/submit`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			}
+		);
 
 		const data = await response.json();
 
