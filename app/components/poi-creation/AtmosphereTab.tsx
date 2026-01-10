@@ -145,7 +145,7 @@ export default function AtmosphereTab() {
 				</div>
 			</section>
 
-			<hr className="border-surface-border" />
+			<hr className="border-border" />
 
 			{/* Lighting Section */}
 			<section className="space-y-4">

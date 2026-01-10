@@ -25,7 +25,7 @@ export function FilterQuickActions({ onQuickFilter }: FilterQuickActionsProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => onQuickFilter("client_meeting")}
-					className="shrink-0 rounded-full border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white flex items-center gap-1.5 transition-all active:scale-95 border"
+					className="shrink-0 rounded-full border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-1.5 transition-all active:scale-95 border"
 				>
 					<span className="material-symbols-outlined text-[16px]!">
 						handshake
@@ -36,7 +36,7 @@ export function FilterQuickActions({ onQuickFilter }: FilterQuickActionsProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => onQuickFilter("date_night")}
-					className="shrink-0 rounded-full border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white flex items-center gap-1.5 transition-all active:scale-95 border"
+					className="shrink-0 rounded-full border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-1.5 transition-all active:scale-95 border"
 				>
 					<span className="material-symbols-outlined text-[16px]!">
 						wine_bar

@@ -34,7 +34,7 @@ interface AddressSuggestion {
 }
 
 export default function LocationTab() {
-	const { register, control, setValue, getValues } =
+	const { register, control, setValue, getValues, watch } =
 		useFormContext<POIFormData>();
 
 	// Initialize map state from form values or default
@@ -55,9 +55,14 @@ export default function LocationTab() {
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 	const [autocompleteDisabled, setAutocompleteDisabled] = useState(false);
+	const [isAddressOverridden, setIsAddressOverridden] = useState(false);
 
 	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 	const reverseGeocodeTimer = useRef<NodeJS.Timeout | null>(null);
+
+	// Watch values for display
+	const currentLat = watch("latitude");
+	const currentLng = watch("longitude");
 
 	// Helper: Update coordinates in one place
 	const updateCoordinates = useCallback(
@@ -73,7 +78,8 @@ export default function LocationTab() {
 	// Reverse geocode coordinates to address
 	const reverseGeocode = useCallback(
 		async (lat: number, lng: number) => {
-			if (!GEOAPIFY_API_KEY || autocompleteDisabled) return;
+			if (!GEOAPIFY_API_KEY || autocompleteDisabled || isAddressOverridden)
+				return;
 
 			try {
 				const response = await fetch(
@@ -96,7 +102,7 @@ export default function LocationTab() {
 				console.error("Reverse geocode error:", error);
 			}
 		},
-		[setValue, autocompleteDisabled]
+		[setValue, autocompleteDisabled, isAddressOverridden]
 	);
 
 	// Search address with Geoapify
@@ -106,7 +112,8 @@ export default function LocationTab() {
 				!query ||
 				query.length < 3 ||
 				!GEOAPIFY_API_KEY ||
-				autocompleteDisabled
+				autocompleteDisabled ||
+				isAddressOverridden
 			) {
 				setSuggestions([]);
 				return;
@@ -152,7 +159,7 @@ export default function LocationTab() {
 				setIsLoadingSuggestions(false);
 			}
 		},
-		[autocompleteDisabled]
+		[autocompleteDisabled, isAddressOverridden]
 	);
 
 	// Debounced address input handler
@@ -203,12 +210,17 @@ export default function LocationTab() {
 							errorMessage = "Location information unavailable.";
 							break;
 						case error.TIMEOUT:
-							errorMessage = "Location request timed out.";
+							errorMessage = "Location request timed out. Please try again.";
 							break;
 					}
 
 					setLocationError(errorMessage);
 					setTimeout(() => setLocationError(null), 5000);
+				},
+				{
+					enableHighAccuracy: true,
+					timeout: 10000, // 10 second timeout to prevent hanging
+					maximumAge: 60000, // Accept cached position up to 1 minute old
 				}
 			);
 		} else {
@@ -252,9 +264,6 @@ export default function LocationTab() {
 		};
 	}, []);
 
-	const currentLat = getValues("latitude");
-	const currentLng = getValues("longitude");
-
 	return (
 		<div className="px-4 py-4 space-y-6">
 			{/* Error Alert */}
@@ -280,9 +289,21 @@ export default function LocationTab() {
 
 			{/* Physical Address */}
 			<section className="space-y-3">
-				<Label className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
-					Physical Address
-				</Label>
+				<div className="flex items-center justify-between">
+					<Label className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
+						Physical Address
+					</Label>
+					<div className="flex items-center space-x-2">
+						<Label htmlFor="address-override" className="text-xs font-medium">
+							Manual Override
+						</Label>
+						<Switch
+							id="address-override"
+							checked={isAddressOverridden}
+							onCheckedChange={setIsAddressOverridden}
+						/>
+					</div>
+				</div>
 				<div className="relative">
 					<span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary material-symbols-outlined">
 						location_on
@@ -300,13 +321,13 @@ export default function LocationTab() {
 
 					{/* Autocomplete Dropdown */}
 					{showSuggestions && suggestions.length > 0 && (
-						<div className="absolute z-50 w-full mt-1 bg-surface-card border border-surface-border rounded-lg shadow-lg max-h-60 overflow-y-auto bg-background-dark">
+						<div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto text-popover-foreground">
 							{suggestions.map((suggestion, index) => (
 								<button
 									key={index}
 									type="button"
 									onClick={() => handleSelectSuggestion(suggestion)}
-									className="w-full px-4 py-3 text-left hover:bg-surface-border transition-colors text-sm text-foreground border-b border-surface-border last:border-b-0"
+									className="w-full px-4 py-3 text-left hover:bg-muted transition-colors text-sm text-foreground border-b border-border last:border-b-0"
 								>
 									{suggestion.formatted}
 								</button>
@@ -320,6 +341,28 @@ export default function LocationTab() {
 						</span>
 					)}
 				</div>
+
+				{/* Lat/Long display when overridden */}
+				{isAddressOverridden && (
+					<div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
+						<div>
+							<Label className="text-xs text-muted-foreground">Latitude</Label>
+							<Input
+								value={currentLat || ""}
+								readOnly
+								className="bg-muted font-mono text-sm h-10"
+							/>
+						</div>
+						<div>
+							<Label className="text-xs text-muted-foreground">Longitude</Label>
+							<Input
+								value={currentLng || ""}
+								readOnly
+								className="bg-muted font-mono text-sm h-10"
+							/>
+						</div>
+					</div>
+				)}
 			</section>
 
 			{/* Floor/Unit Number */}
@@ -345,7 +388,7 @@ export default function LocationTab() {
 
 			{/* Map Location */}
 			<section className="space-y-3" aria-label="Map location selector">
-				<div className="relative bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+				<div className="relative bg-card border border-border rounded-xl overflow-hidden">
 					{/* Interactive Map */}
 					<div className="w-full h-64">
 						<Map
@@ -376,8 +419,8 @@ export default function LocationTab() {
 					</div>
 
 					{/* Coordinate Display */}
-					{currentLat && currentLng && (
-						<div className="absolute top-2 left-2 bg-background-dark/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-surface-border">
+					{currentLat && currentLng && !isAddressOverridden && (
+						<div className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border">
 							<span className="text-xs text-muted-foreground font-mono">
 								📍 {currentLat.toFixed(6)}, {currentLng.toFixed(6)}
 							</span>
@@ -390,7 +433,7 @@ export default function LocationTab() {
 						onClick={handleUseCurrentLocation}
 						disabled={isLocating}
 						aria-label="Use my current location"
-						className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-background-dark/90 backdrop-blur-sm rounded-full border border-surface-border disabled:opacity-50 disabled:cursor-not-allowed"
+						className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm rounded-full border border-border disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{isLocating ? (
 							<span className="w-3 h-3 material-symbols-outlined text-primary text-sm animate-spin">
@@ -469,7 +512,7 @@ export default function LocationTab() {
 
 			{/* Wheelchair Accessible */}
 			<section className="space-y-3">
-				<div className="flex items-center justify-between bg-surface-card border border-surface-border rounded-xl p-4">
+				<div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
 					<div className="flex items-center gap-3">
 						<div className="w-10 h-10 rounded-full bg-primary/20 flex flex-shrink-0 items-center justify-center">
 							<span className="material-symbols-outlined text-primary text-2xl leading-none">
@@ -489,7 +532,11 @@ export default function LocationTab() {
 						name="wheelchairAccessible"
 						control={control}
 						render={({ field }) => (
-							<Switch checked={field.value} onCheckedChange={field.onChange} />
+							<Switch
+								checked={field.value}
+								onCheckedChange={field.onChange}
+								aria-label="Wheelchair accessible"
+							/>
 						)}
 					/>
 				</div>

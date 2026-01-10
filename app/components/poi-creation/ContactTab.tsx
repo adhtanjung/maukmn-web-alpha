@@ -137,7 +137,7 @@ export default function ContactTab() {
 				</div>
 			</section>
 
-			<hr className="border-surface-border" />
+			<hr className="border-border" />
 
 			{/* Social Media Section */}
 			<section className="space-y-4">

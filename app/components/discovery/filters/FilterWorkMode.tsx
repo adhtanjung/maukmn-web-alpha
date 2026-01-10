@@ -38,11 +38,11 @@ export function FilterWorkMode({
 			<Accordion type="multiple" defaultValue={[]} className="space-y-2.5">
 				<AccordionItem
 					value="work-mode"
-					className="bg-surface-dark rounded-xl overflow-hidden border border-white/5"
+					className="bg-card rounded-xl overflow-hidden border border-border"
 				>
-					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none hover:no-underline">
-						<span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] flex items-center gap-2">
-							<span className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-primary">
+					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors select-none hover:no-underline">
+						<span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-2">
+							<span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-primary">
 								<span className="material-symbols-outlined text-[16px]!">
 									work
 								</span>
@@ -50,10 +50,10 @@ export function FilterWorkMode({
 							Work Mode
 						</span>
 					</AccordionTrigger>
-					<AccordionContent className="px-3 pb-4 pt-1 border-t border-white/5 bg-black/20 space-y-4">
+					<AccordionContent className="px-3 pb-4 pt-1 border-t border-border bg-background/50 space-y-4">
 						<div className="space-y-2 pt-2">
-							<label className="text-xs font-medium text-white/90 flex items-center gap-1.5">
-								<span className="material-symbols-outlined text-[16px]! text-white/50">
+							<label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+								<span className="material-symbols-outlined text-[16px]! text-muted-foreground">
 									wifi
 								</span>{" "}
 								Wifi Quality
@@ -78,8 +78,8 @@ export function FilterWorkMode({
 						</div>
 
 						<div className="space-y-2">
-							<label className="text-xs font-medium text-white/90 flex items-center gap-1.5">
-								<span className="material-symbols-outlined text-[16px]! text-white/50">
+							<label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+								<span className="material-symbols-outlined text-[16px]! text-muted-foreground">
 									volume_up
 								</span>{" "}
 								Noise Level
@@ -104,8 +104,8 @@ export function FilterWorkMode({
 						</div>
 
 						<div className="space-y-2">
-							<label className="text-xs font-medium text-white/90 flex items-center gap-1.5">
-								<span className="material-symbols-outlined text-[16px]! text-white/50">
+							<label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+								<span className="material-symbols-outlined text-[16px]! text-muted-foreground">
 									power
 								</span>{" "}
 								Power Outlets
@@ -160,7 +160,7 @@ export function FilterWorkMode({
 											"h-auto py-1.5 px-3 rounded-lg text-[11px] font-medium transition-all border",
 											isSelected
 												? "border-primary bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)]"
-												: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+												: "border-border bg-muted/20 text-muted-foreground hover:bg-muted hover:text-foreground"
 										)}
 									>
 										<span className="material-symbols-outlined text-[16px]! mr-1">

@@ -131,7 +131,7 @@ export default function OperationsTab() {
 				</div>
 
 				{/* Selected Day Schedule */}
-				<div className="bg-surface-card border border-surface-border rounded-xl p-4 space-y-4">
+				<div className="bg-card border border-border rounded-xl p-4 space-y-4">
 					<div className="flex items-center justify-between">
 						<h4 className="text-foreground font-semibold">
 							{DAYS_OF_WEEK.find((d) => d.key === selectedDay)?.fullLabel}
@@ -211,7 +211,7 @@ export default function OperationsTab() {
 				</div>
 
 				{/* Quick Summary */}
-				<div className="bg-surface-card/50 border border-surface-border rounded-lg p-3">
+				<div className="bg-card/50 border border-border rounded-lg p-3">
 					<p className="text-xs font-medium text-muted-foreground mb-2">
 						Weekly Schedule Summary
 					</p>
@@ -240,7 +240,7 @@ export default function OperationsTab() {
 				</div>
 			</section>
 
-			<hr className="border-surface-border" />
+			<hr className="border-border" />
 
 			{/* Reservations Section */}
 			<section className="space-y-4">
@@ -249,7 +249,7 @@ export default function OperationsTab() {
 				</Label>
 
 				{/* Reservation Required Toggle */}
-				<div className="bg-surface-card border border-surface-border rounded-xl p-4">
+				<div className="bg-card border border-border rounded-xl p-4">
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="text-foreground font-medium">
@@ -293,7 +293,7 @@ export default function OperationsTab() {
 				)}
 			</section>
 
-			<hr className="border-surface-border" />
+			<hr className="border-border" />
 
 			{/* Payment Methods Section */}
 			<section className="space-y-4">
@@ -326,7 +326,7 @@ export default function OperationsTab() {
 				</div>
 			</section>
 
-			<hr className="border-surface-border" />
+			<hr className="border-border" />
 
 			{/* Wait Time Section */}
 			<section className="space-y-4">

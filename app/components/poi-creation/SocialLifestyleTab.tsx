@@ -20,7 +20,7 @@ export default function SocialLifestyleTab() {
 				</Label>
 
 				{/* Kid Friendly */}
-				<div className="bg-surface-card border border-surface-border rounded-xl p-4 flex items-center justify-between">
+				<div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<div className="w-10 h-10 rounded-full bg-primary/20 flex flex-shrink-0 items-center justify-center">
 							<span className="material-symbols-outlined text-primary text-2xl leading-none">
@@ -44,7 +44,7 @@ export default function SocialLifestyleTab() {
 				</div>
 
 				{/* Smoker Friendly */}
-				<div className="bg-surface-card border border-surface-border rounded-xl p-4 flex items-center justify-between">
+				<div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<div className="w-10 h-10 rounded-full bg-primary/20 flex flex-shrink-0 items-center justify-center">
 							<span className="material-symbols-outlined text-primary text-2xl leading-none">

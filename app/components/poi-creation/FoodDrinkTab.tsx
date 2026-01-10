@@ -123,7 +123,7 @@ export default function FoodDrinkTab() {
 					name="priceRange"
 					control={control}
 					render={({ field }) => (
-						<div className="bg-surface-card border border-surface-border rounded-2xl p-2 flex">
+						<div className="bg-card border border-border rounded-2xl p-2 flex">
 							{PRICE_LEVELS.map((level) => (
 								<Button
 									key={level.value}

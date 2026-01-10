@@ -29,10 +29,10 @@ const ContactTab = lazy(() => import("./ContactTab"));
 function TabSkeleton() {
 	return (
 		<div className="px-4 py-6 space-y-4 animate-pulse">
-			<div className="h-6 w-32 bg-surface-border rounded" />
-			<div className="h-14 w-full bg-surface-border rounded-xl" />
-			<div className="h-14 w-full bg-surface-border rounded-xl" />
-			<div className="h-32 w-full bg-surface-border rounded-xl" />
+			<div className="h-6 w-32 bg-muted rounded" />
+			<div className="h-14 w-full bg-muted rounded-xl" />
+			<div className="h-14 w-full bg-muted rounded-xl" />
+			<div className="h-32 w-full bg-muted rounded-xl" />
 		</div>
 	);
 }
@@ -252,10 +252,7 @@ export default function CreatePOIOverlay({
 					await saveSection(activeTab);
 				} catch (error) {
 					console.error("Failed to save on Next:", error);
-					// Don't block navigation? Or do?
-					// Let's not block for now to keep it fluid,
-					// errors are shown via feedback state if saveSection throws?
-					// Wait, saveSection in context throws.
+					// Don't block navigation, errors are shown via feedback state
 				}
 			}
 			handleTabChange(TABS[currentIndex + 1]);
@@ -376,9 +373,9 @@ export default function CreatePOIOverlay({
 				stiffness: 300,
 				duration: 0.4,
 			}}
-			className="absolute top-4 left-0 right-0 bottom-0 z-[100] bg-background-light dark:bg-background-dark flex flex-col rounded-t-3xl overflow-hidden"
+			className="absolute top-4 left-0 right-0 bottom-0 z-[100] bg-background flex flex-col rounded-t-3xl overflow-hidden"
 		>
-			<div className="sticky top-0 z-50 bg-background-dark/95 backdrop-blur-md border-surface-border/50 pt-2">
+			<div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-border/50 pt-2">
 				<div className="flex items-center p-4 pb-2 justify-between relative">
 					<div className="w-10"></div> {/* Spacer for centering */}
 					<h2 className="text-foreground text-lg font-bold leading-tight tracking-[-0.015em] text-center absolute left-1/2 -translate-x-1/2">
@@ -388,7 +385,7 @@ export default function CreatePOIOverlay({
 						variant="ghost"
 						size="icon"
 						onClick={onClose}
-						className="w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-surface-border/50 transition-colors"
+						className="w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
 					>
 						<span className="material-symbols-outlined text-2xl leading-none">
 							close
@@ -405,13 +402,13 @@ export default function CreatePOIOverlay({
 						<div className="relative">
 							{/* Left fade overlay */}
 							<div
-								className={`absolute left-0 top-0 bottom-0 w-36 bg-gradient-to-r from-surface-dark to-transparent z-10 pointer-events-none rounded-l-full transition-opacity duration-200 ${
+								className={`absolute left-0 top-0 bottom-0 w-36 bg-linear-to-r from-background to-transparent z-10 pointer-events-none rounded-l-full transition-opacity duration-200 ${
 									showLeftFade ? "opacity-100" : "opacity-0"
 								}`}
 							/>
 							{/* Right fade overlay */}
 							<div
-								className={`absolute right-0 top-0 bottom-0 w-36 bg-gradient-to-l from-surface-dark to-transparent z-10 pointer-events-none rounded-r-full transition-opacity duration-200 ${
+								className={`absolute right-0 top-0 bottom-0 w-36 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none rounded-r-full transition-opacity duration-200 ${
 									showRightFade ? "opacity-100" : "opacity-0"
 								}`}
 							/>
@@ -533,14 +530,14 @@ export default function CreatePOIOverlay({
 				</Suspense>
 			</main>
 
-			<div className="sticky bottom-0 left-0 right-0 p-4 pb-6 bg-background-dark border-t border-white/10 flex flex-col gap-3 z-50">
+			<div className="sticky bottom-0 left-0 right-0 p-4 pb-6 bg-background border-t border-border flex flex-col gap-3 z-50">
 				{saveFeedback && (
 					<div className="animate-in slide-in-from-bottom-5 fade-in duration-300">
 						<Alert
 							variant={
 								saveFeedback.type === "error" ? "destructive" : "default"
 							}
-							className="bg-surface-card border-surface-border flex items-center py-2 px-3"
+							className="bg-card border-border flex items-center py-2 px-3"
 						>
 							<span
 								className={`material-symbols-outlined h-4 w-4 mr-2 ${
@@ -566,14 +563,14 @@ export default function CreatePOIOverlay({
 					<Button
 						variant="outline"
 						onClick={handleBack}
-						className="h-12 px-4 rounded-full border-white/10 text-foreground font-bold text-sm hover:bg-surface-border/50 transition-colors"
+						className="h-12 px-4 rounded-full border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors"
 					>
 						{activeTab === "profile" ? "Cancel" : "Back"}
 					</Button>
 					<Button
 						variant="ghost"
 						onClick={handleDiscard}
-						className="h-12 w-12 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-400 transition-colors flex items-center justify-center"
+						className="h-12 w-12 rounded-full border border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive/80 transition-colors flex items-center justify-center"
 						title="Discard Draft"
 					>
 						<span className="material-symbols-outlined text-xl">delete</span>
@@ -583,7 +580,7 @@ export default function CreatePOIOverlay({
 						variant="ghost"
 						onClick={handleSaveDraft}
 						disabled={isSaving}
-						className="h-12 w-12 rounded-full border border-white/10 text-muted-foreground hover:bg-surface-border/50 transition-colors flex items-center justify-center"
+						className="h-12 w-12 rounded-full border border-border text-muted-foreground hover:bg-muted/50 transition-colors flex items-center justify-center"
 						title="Save Draft"
 					>
 						<span
@@ -596,7 +593,7 @@ export default function CreatePOIOverlay({
 					</Button>
 					<Button
 						onClick={activeTab === "contact" ? handleSubmit : handleNext}
-						className="flex-1 h-12 rounded-full bg-primary text-black font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
+						className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
 					>
 						{activeTab === "contact"
 							? mode === "edit"

@@ -49,12 +49,12 @@ export function OutletCard({
 				"h-[52px] rounded-xl border flex flex-col items-center justify-center gap-1.5 p-1 transition-colors relative overflow-hidden",
 				isSelected
 					? "border-primary bg-primary/10 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.3)]"
-					: "border-white/10 bg-white/5 hover:bg-white/10"
+					: "border-border bg-card hover:bg-muted"
 			)}
 		>
 			<div className="relative w-full flex items-end justify-center">
 				{/* The Fluid Container */}
-				<div className="w-5 h-6 rounded-[4px] border border-white/10 bg-black/20 relative overflow-hidden backdrop-blur-sm">
+				<div className="w-5 h-6 rounded-[4px] border border-border bg-muted/20 relative overflow-hidden backdrop-blur-sm">
 					{/* The Fluid */}
 					<div
 						className={cn(
@@ -74,7 +74,7 @@ export function OutletCard({
 						<span
 							className={cn(
 								"material-symbols-outlined text-[12px]! transition-colors z-10",
-								isSelected ? "text-white" : "text-white/20"
+								isSelected ? "text-foreground" : "text-muted-foreground"
 							)}
 						>
 							power
@@ -85,7 +85,7 @@ export function OutletCard({
 			<span
 				className={cn(
 					"text-[9px] font-medium transition-colors leading-none",
-					isSelected ? "text-white" : "text-white/50"
+					isSelected ? "text-foreground" : "text-muted-foreground"
 				)}
 			>
 				{label}

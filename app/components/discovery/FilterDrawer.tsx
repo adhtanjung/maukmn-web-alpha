@@ -144,18 +144,18 @@ export function FilterDrawer({
 	return (
 		<Drawer>
 			<DrawerTrigger asChild>{children}</DrawerTrigger>
-			<DrawerContent className="bg-background-dark border-white/10 h-[94%] max-w-[430px] mx-auto rounded-t-xl">
+			<DrawerContent className="bg-background border-border h-[94%] max-w-[430px] mx-auto rounded-t-xl">
 				<div className="flex flex-col h-full overflow-hidden">
 					{/* Header */}
-					<div className="px-6 py-5 flex items-center justify-between border-b border-white/5 bg-background-dark/95 backdrop-blur-md z-20 shrink-0">
-						<DrawerTitle className="text-xl font-bold text-white tracking-tight">
+					<div className="px-6 py-5 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-md z-20 shrink-0">
+						<DrawerTitle className="text-xl font-bold text-foreground tracking-tight">
 							Filters
 						</DrawerTitle>
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={handleReset}
-							className="text-primary hover:text-primary-dark hover:bg-transparent -mr-2"
+							className="text-primary hover:text-primary/90 hover:bg-transparent -mr-2"
 						>
 							Reset
 						</Button>
@@ -200,12 +200,12 @@ export function FilterDrawer({
 						/>
 					</div>
 
-					<div className="p-4 border-t border-white/5 bg-background-dark/95 backdrop-blur-xl shrink-0">
+					<div className="p-4 border-t border-border bg-background/95 backdrop-blur-xl shrink-0">
 						<DrawerClose asChild>
 							<Button
 								onClick={handleApply}
 								disabled={loading}
-								className="w-full h-12 bg-primary hover:bg-primary-dark text-white text-[15px] font-bold rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.25)] transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-50"
+								className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-[15px] font-bold rounded-xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-50"
 							>
 								{loading
 									? "Loading..."

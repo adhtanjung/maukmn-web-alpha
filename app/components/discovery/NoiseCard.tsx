@@ -52,7 +52,7 @@ export function NoiseCard({ value, label, current, onChange }: NoiseCardProps) {
 				"h-[52px] rounded-xl border flex flex-col items-center justify-center gap-2 p-1 transition-colors relative overflow-hidden",
 				isSelected
 					? "border-primary bg-primary/10 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.3)]"
-					: "border-white/10 bg-white/5 hover:bg-white/10"
+					: "border-border bg-card hover:bg-muted"
 			)}
 		>
 			<div className="flex items-center justify-center gap-[3px] h-5">
@@ -63,7 +63,7 @@ export function NoiseCard({ value, label, current, onChange }: NoiseCardProps) {
 						style={{ height: `${isSelected ? h : 15}%` }}
 						className={cn(
 							"w-[3px] rounded-full transition-all duration-500 ease-out",
-							isSelected ? activeColor : "bg-zinc-700"
+							isSelected ? activeColor : "bg-muted-foreground/30"
 						)}
 					/>
 				))}
@@ -71,7 +71,7 @@ export function NoiseCard({ value, label, current, onChange }: NoiseCardProps) {
 			<span
 				className={cn(
 					"text-[9px] font-medium transition-colors leading-none",
-					isSelected ? "text-white" : "text-white/50"
+					isSelected ? "text-foreground" : "text-muted-foreground"
 				)}
 			>
 				{label}

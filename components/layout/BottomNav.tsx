@@ -1,0 +1,85 @@
+"use client";
+
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+
+export default function BottomNav() {
+	const router = useRouter();
+	// "Tropical Modernist" Floating Action Button
+	// Using Primary (Emerald) for the main action
+	// ring-background ensures a clean separation from the nav bar
+	const createButtonStyles =
+		"flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 active:scale-95 transition-transform border border-border -mt-8 mb-2 ring-4 ring-background hover:brightness-110";
+
+	return (
+		<div className="absolute bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none">
+			<div className="pointer-events-auto bg-card/90 backdrop-blur-xl border border-border/50 rounded-full h-[64px] shadow-2xl shadow-black/10 flex items-center justify-between px-6 gap-2 w-auto min-w-[320px] max-w-sm mx-4">
+				<Button
+					variant="ghost"
+					className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 hover:bg-muted/50 transition-colors group"
+					onClick={() => router.push("/")}
+				>
+					<div className="relative flex flex-col items-center">
+						<span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform font-variation-settings-filled">
+							home
+						</span>
+						{/* Active Dot Indicator using the Emerald Primary */}
+						<div className="absolute -bottom-2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_var(--color-primary)]"></div>
+					</div>
+				</Button>
+
+				<Button
+					variant="ghost"
+					className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
+				>
+					<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
+						explore
+					</span>
+				</Button>
+
+				{/* Floating Action Button (FAB) */}
+				<div className="relative top-0">
+					<>
+						<SignedIn>
+							<Button
+								onClick={() => router.push("/create-poi")}
+								className={createButtonStyles}
+							>
+								<span className="material-symbols-outlined text-3xl">add</span>
+							</Button>
+						</SignedIn>
+						<SignedOut>
+							<SignInButton mode="modal">
+								<Button className={createButtonStyles}>
+									<span className="material-symbols-outlined text-3xl">
+										add
+									</span>
+								</Button>
+							</SignInButton>
+						</SignedOut>
+					</>
+				</div>
+
+				<Button
+					variant="ghost"
+					className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
+				>
+					<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
+						bookmark
+					</span>
+				</Button>
+
+				<Button
+					variant="ghost"
+					className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
+					onClick={() => router.push("/profile")}
+				>
+					<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
+						person
+					</span>
+				</Button>
+			</div>
+		</div>
+	);
+}

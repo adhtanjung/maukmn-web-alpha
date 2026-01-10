@@ -1,6 +1,6 @@
 export default function AdminLoading() {
 	return (
-		<div className="flex flex-col h-screen w-full bg-background-dark p-4 gap-6">
+		<div className="flex flex-col h-screen w-full bg-background p-4 gap-6">
 			{/* Header skeleton */}
 			<div className="flex items-center justify-between">
 				<div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />

@@ -15,7 +15,7 @@ export default function CreatePOIPage() {
 
 	return (
 		<POIFormProvider>
-			<main className="h-full w-full bg-background-dark overflow-hidden relative">
+			<main className="h-full w-full bg-background overflow-hidden relative">
 				<AnimatePresence mode="wait">
 					<Suspense fallback={null}>
 						<CreatePOIOverlay onClose={handleClose} key="create-poi-overlay" />

@@ -102,13 +102,13 @@ export default function TopHeader({
 						resultCount={resultCount}
 						loading={loading}
 					>
-						<button className="h-9 pl-1 pr-3 rounded-full bg-surface-dark border border-white/15 flex items-center gap-2 shrink-0 shadow-md active:scale-95 transition-transform hover:border-primary/50">
+						<button className="h-9 pl-1 pr-3 rounded-full bg-card border border-white/15 flex items-center gap-2 shrink-0 shadow-md active:scale-95 transition-transform hover:border-primary/50">
 							<div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
-								<span className="material-symbols-outlined text-primary text-[16px]!">
+								<span className="material-symbols-outlined text-primary text-base">
 									tune
 								</span>
 							</div>
-							<span className="text-xs font-bold text-white tracking-wide">
+							<span className="text-xs font-bold text-foreground tracking-wide">
 								Filter ({activeFilterCount})
 							</span>
 						</button>
@@ -119,19 +119,19 @@ export default function TopHeader({
 								<span className="text-xs font-medium text-white/90">
 									Sort By
 								</span>
-								<span className="material-symbols-outlined text-white/60 text-[18px]!">
+								<span className="material-symbols-outlined text-white/60 text-lg">
 									sort
 								</span>
 							</button>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent className="bg-background-dark border-white/10 text-white min-w-[150px]">
-							<DropdownMenuItem className="text-xs font-medium focus:bg-white/10 focus:text-white cursor-pointer">
+						<DropdownMenuContent className="bg-popover border-border text-popover-foreground min-w-[150px]">
+							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
 								Recommended
 							</DropdownMenuItem>
-							<DropdownMenuItem className="text-xs font-medium focus:bg-white/10 focus:text-white cursor-pointer">
+							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
 								Nearest
 							</DropdownMenuItem>
-							<DropdownMenuItem className="text-xs font-medium focus:bg-white/10 focus:text-white cursor-pointer">
+							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
 								Top Rated
 							</DropdownMenuItem>
 						</DropdownMenuContent>
@@ -140,19 +140,19 @@ export default function TopHeader({
 						<span className="text-xs font-medium text-white/90">
 							All Categories
 						</span>
-						<span className="material-symbols-outlined text-white/60 text-[18px]!">
+						<span className="material-symbols-outlined text-white/60 text-lg">
 							expand_more
 						</span>
 					</button>
 					<button className="h-9 pl-3.5 pr-2 rounded-full bg-white/5 border border-white/10 flex items-center gap-2 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
 						<span className="text-xs font-medium text-white/90">Open Now</span>
-						<span className="material-symbols-outlined text-primary text-[28px]! -my-1">
+						<span className="material-symbols-outlined text-primary text-2xl -my-1">
 							toggle_on
 						</span>
 					</button>
 					<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
 						<span className="text-xs font-medium text-white/90">Fast Wifi</span>
-						<span className="material-symbols-outlined text-white/60 text-[16px]!">
+						<span className="material-symbols-outlined text-white/60 text-base">
 							add
 						</span>
 					</button>
@@ -169,7 +169,7 @@ export default function TopHeader({
 					</div>
 					<button className="h-9 px-3.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-white/10 transition-colors">
 						<span className="text-xs font-medium text-white/90">Nearby</span>
-						<span className="material-symbols-outlined text-white/60 text-[18px]!">
+						<span className="material-symbols-outlined text-white/60 text-lg">
 							expand_more
 						</span>
 					</button>

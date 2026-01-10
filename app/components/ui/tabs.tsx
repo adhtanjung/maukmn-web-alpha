@@ -26,10 +26,10 @@ const tabsListVariants = cva("inline-flex items-center text-muted-foreground", {
 		variant: {
 			default: "bg-muted p-1 rounded-md justify-center",
 			underline:
-				"space-x-6 bg-transparent space-x-4 p-0 border-b rounded-none w-full justify-between", // Modified to match user's previous layout: full width
+				"space-x-6 bg-transparent space-x-4 p-0 border-b border-border rounded-none w-full justify-between",
 			pill: "bg-transparent p-0 gap-0.5 justify-center",
 			rounded:
-				"bg-surface-dark border border-white/10 p-1 rounded-full w-full overflow-x-auto scroll-smooth no-scrollbar", // Scrollable tabs with smooth animation
+				"bg-card border border-border p-1 rounded-full w-full overflow-x-auto scroll-smooth no-scrollbar",
 			folder: "space-x-1 border-b justify-center",
 		},
 	},
@@ -43,10 +43,10 @@ const tabsTriggerVariants = cva(
 				default:
 					"rounded-sm data-[state=active]:bg-background data-[state=inactive]:hover:bg-primary/5 data-[state=active]:text-foreground data-[state=active]:shadow-sm",
 				underline:
-					"rounded-none data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none border-b-[3px] border-transparent data-[state=active]:border-primary data-[state=inactive]:text-text-secondary data-[state=inactive]:hover:text-white pb-[13px] pt-2 flex-1", // Custom styles to match the POI overlay design exactly
+					"rounded-none data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-[3px] border-transparent data-[state=active]:border-primary data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground pb-[13px] pt-2 flex-1",
 				pill: "data-[state=active]:bg-primary data-[state=inactive]:bg-muted data-[state=inactive]:hover:bg-primary/20 data-[state=active]:text-primary-foreground  first:rounded-l-full last:rounded-r-full data-[state=active]:shadow-sm",
 				rounded:
-					"rounded-full flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-black data-[state=inactive]:text-text-secondary data-[state=inactive]:hover:text-white transition-colors", // White active pill, scrollable
+					"rounded-full flex-shrink-0 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground transition-colors",
 				folder:
 					"h-9 px-3 rounded-t-lg -mb-[2px] transition-all duration-200 ease-in-out border border-transparent data-[state=inactive]:hover:bg-muted data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border data-[state=active]:border-b-transparent hover:data-[state=active]:border-b-transparent",
 			},
@@ -156,7 +156,7 @@ const TabsTrigger = React.forwardRef<
 				"relative inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
 				variant === "rounded" && "rounded-full flex-shrink-0",
 				variant === "pill" && "first:rounded-l-full last:rounded-r-full",
-				"data-[state=inactive]:text-text-secondary data-[state=inactive]:hover:text-white",
+				"data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground",
 				className
 			)}
 			style={{ transformStyle: "preserve-3d" }}
@@ -168,7 +168,7 @@ const TabsTrigger = React.forwardRef<
 					transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
 					className={cn(
 						"absolute inset-0",
-						variant === "rounded" && "bg-white rounded-full",
+						variant === "rounded" && "bg-foreground rounded-full",
 						variant === "pill" && "bg-primary rounded-full",
 						activeClassName
 					)}
@@ -179,7 +179,7 @@ const TabsTrigger = React.forwardRef<
 					"relative z-10 block transition-colors",
 					isActive
 						? variant === "rounded"
-							? "text-black"
+							? "text-background"
 							: "text-primary-foreground"
 						: ""
 				)}

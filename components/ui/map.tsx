@@ -618,8 +618,15 @@ function MapControls({
 				(error) => {
 					console.error("Error getting location:", error);
 					setWaitingForLocation(false);
+				},
+				{
+					enableHighAccuracy: true,
+					timeout: 10000, // 10 second timeout
+					maximumAge: 60000, // Accept cached position up to 1 minute old
 				}
 			);
+		} else {
+			setWaitingForLocation(false);
 		}
 	}, [map, onLocate]);
 

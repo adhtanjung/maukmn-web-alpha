@@ -102,10 +102,10 @@ export default function POICard({
 	const category = poi.category_names?.[0] || poi.brand || "Place";
 
 	return (
-		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden">
+		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden bg-card">
 			{/* Hero Image with Tap Zones for Gallery */}
 			<div
-				className="absolute inset-0 w-full h-full cursor-pointer group bg-card"
+				className="absolute inset-0 w-full h-full cursor-pointer group bg-muted"
 				onClick={handleImageTap}
 				role="button"
 				tabIndex={0}
@@ -208,7 +208,7 @@ export default function POICard({
 						aria-label="Toggle favorite"
 						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10 group"
 					>
-						<span className="material-symbols-outlined text-white text-[26px]! group-hover:text-destructive transition-colors">
+						<span className="material-symbols-outlined text-white text-3xl group-hover:text-destructive transition-colors">
 							favorite
 						</span>
 					</Button>
@@ -223,7 +223,7 @@ export default function POICard({
 						aria-label="View comments"
 						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
 					>
-						<span className="material-symbols-outlined text-white text-[26px]!">
+						<span className="material-symbols-outlined text-white text-3xl">
 							chat_bubble
 						</span>
 					</Button>
@@ -239,7 +239,7 @@ export default function POICard({
 						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
 						onClick={handleDirections}
 					>
-						<span className="material-symbols-outlined text-white text-[26px]!">
+						<span className="material-symbols-outlined text-white text-3xl">
 							directions
 						</span>
 					</Button>
@@ -251,7 +251,7 @@ export default function POICard({
 						aria-label="Share"
 						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
 					>
-						<span className="material-symbols-outlined text-white text-[26px]!">
+						<span className="material-symbols-outlined text-white text-3xl">
 							share
 						</span>
 					</Button>
@@ -264,7 +264,7 @@ export default function POICard({
 					{/* Title Row with Workability Score */}
 					<div className="flex items-start justify-between pr-16">
 						<div className="flex items-center gap-2">
-							<h1 className="text-[28px] leading-tight font-extrabold tracking-tight text-white drop-shadow-lg">
+							<h1 className="text-3xl leading-tight font-extrabold tracking-tight text-white drop-shadow-lg">
 								{poi.name}
 							</h1>
 							{workabilityScore && (
@@ -272,7 +272,7 @@ export default function POICard({
 									variant="outline"
 									className="flex items-center gap-0.5 bg-amber-500/20 border-amber-500/30 px-1.5 py-0.5"
 								>
-									<span className="material-symbols-outlined text-amber-400 text-[14px]!">
+									<span className="material-symbols-outlined text-amber-400 text-sm">
 										bolt
 									</span>
 									<span className="text-amber-400 text-[11px] font-bold">
@@ -286,7 +286,7 @@ export default function POICard({
 					{/* Meta Row: Rating, Category, Distance, Status */}
 					<div className="flex items-center flex-wrap gap-2 text-white/90 text-[13px] font-medium drop-shadow-md">
 						<div className="flex items-center gap-1">
-							<span className="material-symbols-outlined text-primary text-[16px]!">
+							<span className="material-symbols-outlined text-primary text-base">
 								star
 							</span>
 							<span className="font-bold">4.5</span>
@@ -334,13 +334,13 @@ export default function POICard({
 							variant={badge.featured ? "default" : "outline"}
 							className={`flex h-7 shrink-0 items-center justify-center gap-x-1.5 pl-2.5 pr-3 ${
 								badge.featured
-									? "bg-primary/90 shadow-[0_0_15px_rgba(16,185,129,0.4)] border-primary/50"
+									? "bg-primary/90 shadow-[0_0_15px_rgba(10,92,68,0.4)] border-primary/50"
 									: "bg-white/10 backdrop-blur-md border-white/10"
 							}`}
 						>
 							<span
-								className={`material-symbols-outlined text-[16px]! ${
-									badge.featured ? "text-white" : "text-primary"
+								className={`material-symbols-outlined text-base ${
+									badge.featured ? "text-primary-foreground" : "text-primary"
 								}`}
 							>
 								{badge.icon}
@@ -348,7 +348,7 @@ export default function POICard({
 							<p
 								className={`text-[11px] ${
 									badge.featured
-										? "text-white font-bold"
+										? "text-primary-foreground font-bold"
 										: "text-white font-semibold"
 								}`}
 							>
@@ -363,13 +363,13 @@ export default function POICard({
 					<div className="flex gap-2 pt-1">
 						<Button
 							size="sm"
-							className="h-9 px-4 rounded-full bg-primary text-black font-bold text-xs shadow-lg"
+							className="h-9 px-4 rounded-full bg-primary text-primary-foreground font-bold text-xs shadow-lg"
 							onClick={() => {
 								if (poi.website) window.open(poi.website, "_blank");
 								else if (poi.phone) window.open(`tel:${poi.phone}`);
 							}}
 						>
-							<span className="material-symbols-outlined text-[16px]! mr-1">
+							<span className="material-symbols-outlined text-base mr-1">
 								calendar_month
 							</span>
 							Book Now

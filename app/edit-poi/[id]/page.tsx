@@ -64,10 +64,10 @@ export default function EditPOIPage() {
 
 	if (loading) {
 		return (
-			<main className="h-full w-full bg-background-dark flex items-center justify-center">
+			<main className="h-full w-full bg-background flex items-center justify-center">
 				<div className="animate-pulse flex flex-col items-center gap-4">
-					<div className="w-12 h-12 rounded-full bg-white/10" />
-					<div className="h-4 w-32 bg-white/10 rounded" />
+					<div className="w-12 h-12 rounded-full bg-muted" />
+					<div className="h-4 w-32 bg-muted rounded" />
 				</div>
 			</main>
 		);
@@ -75,7 +75,7 @@ export default function EditPOIPage() {
 
 	if (error) {
 		return (
-			<main className="h-full w-full bg-background-dark flex flex-col items-center justify-center p-4">
+			<main className="h-full w-full bg-background flex flex-col items-center justify-center p-4">
 				<Alert variant="destructive" className="max-w-md">
 					<AlertDescription>{error}</AlertDescription>
 				</Alert>
@@ -93,7 +93,7 @@ export default function EditPOIPage() {
 	if (!initialData) return null;
 
 	return (
-		<main className="h-full w-full bg-background-dark relative">
+		<main className="h-full w-full bg-background relative">
 			<POIFormProvider initialData={initialData} initialDraftId={poiId}>
 				<Suspense fallback={null}>
 					<CreatePOIOverlay

@@ -36,7 +36,7 @@ export function FilterLogistics({
 }: FilterLogisticsProps) {
 	return (
 		<div className="space-y-3">
-			<h3 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] mb-2">
+			<h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-2">
 				Food & Facilities
 			</h3>
 			<Accordion
@@ -46,11 +46,11 @@ export function FilterLogistics({
 			>
 				<AccordionItem
 					value="dietary"
-					className="bg-surface-dark rounded-xl overflow-hidden border border-white/5"
+					className="bg-card rounded-xl overflow-hidden border border-border"
 				>
-					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none hover:no-underline">
-						<span className="text-xs font-bold text-white flex items-center gap-2">
-							<span className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-primary">
+					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted transition-colors select-none hover:no-underline">
+						<span className="text-xs font-bold text-foreground flex items-center gap-2">
+							<span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-primary">
 								<span className="material-symbols-outlined text-[16px]!">
 									restaurant
 								</span>
@@ -58,7 +58,7 @@ export function FilterLogistics({
 							Dietary & Food
 						</span>
 					</AccordionTrigger>
-					<AccordionContent className="px-3 pb-4 pt-1 border-t border-white/5 bg-black/20">
+					<AccordionContent className="px-3 pb-4 pt-1 border-t border-border bg-background/50">
 						<div className="flex flex-wrap gap-1.5 mb-3 mt-2">
 							{["Vegan", "Vegetarian", "Halal", "Gluten-Free", "Nut-Free"].map(
 								(item) => {
@@ -74,7 +74,7 @@ export function FilterLogistics({
 												"h-auto py-1 px-2.5 rounded-full text-[10px] border transition-all",
 												isSelected
 													? "border-primary/50 bg-primary/10 text-primary shadow-sm hover:bg-primary/20 hover:text-primary hover:border-primary/60"
-													: "border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white/80"
+													: "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
 											)}
 										>
 											{item}
@@ -87,10 +87,10 @@ export function FilterLogistics({
 							value={cuisine || undefined}
 							onValueChange={onCuisineChange}
 						>
-							<SelectTrigger className="w-full h-10 bg-surface-dark border-white/10 text-white text-xs rounded-lg px-3 appearance-none focus:ring-1 focus:ring-primary outline-none focus:border-primary/50 transition-all cursor-pointer hover:bg-white/5">
+							<SelectTrigger className="w-full h-10 bg-card border-border text-foreground text-xs rounded-lg px-3 appearance-none focus:ring-1 focus:ring-primary outline-none focus:border-primary/50 transition-all cursor-pointer hover:bg-muted">
 								<SelectValue placeholder="Any Cuisine" />
 							</SelectTrigger>
-							<SelectContent className="bg-surface-dark border-white/10 text-white">
+							<SelectContent className="bg-popover border-border text-popover-foreground">
 								<SelectItem value="italian">Italian</SelectItem>
 								<SelectItem value="japanese">Japanese</SelectItem>
 								<SelectItem value="mexican">Mexican</SelectItem>
@@ -101,11 +101,11 @@ export function FilterLogistics({
 
 				<AccordionItem
 					value="parking"
-					className="bg-surface-dark rounded-xl overflow-hidden border border-white/5"
+					className="bg-card rounded-xl overflow-hidden border border-border"
 				>
-					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none hover:no-underline">
-						<span className="text-xs font-bold text-white flex items-center gap-2">
-							<span className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-primary">
+					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted transition-colors select-none hover:no-underline">
+						<span className="text-xs font-bold text-foreground flex items-center gap-2">
+							<span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-primary">
 								<span className="material-symbols-outlined text-[16px]!">
 									local_parking
 								</span>
@@ -113,7 +113,7 @@ export function FilterLogistics({
 							Logistics & Parking
 						</span>
 					</AccordionTrigger>
-					<AccordionContent className="px-3 pb-4 pt-2 border-t border-white/5 space-y-3 bg-black/20">
+					<AccordionContent className="px-3 pb-4 pt-2 border-t border-border space-y-3 bg-background/50">
 						{[
 							{ id: "car-parking", value: "car", label: "Car Parking" },
 							{
@@ -131,7 +131,7 @@ export function FilterLogistics({
 								/>
 								<label
 									htmlFor={opt.id}
-									className="text-sm text-white/80 cursor-pointer"
+									className="text-sm text-foreground/80 cursor-pointer"
 								>
 									{opt.label}
 								</label>

@@ -19,9 +19,9 @@ export function WifiCard({ value, label, current, onChange }: WifiCardProps) {
 			moderate: "text-yellow-400",
 			fast: "text-emerald-400",
 			excellent: "text-teal-400",
-			any: "text-zinc-200",
-			none: "text-zinc-200",
-		}[value] || "text-zinc-200";
+			any: "text-muted-foreground",
+			none: "text-muted-foreground",
+		}[value] || "text-muted-foreground";
 
 	// Define animation speeds
 	const pulseSpeed =
@@ -49,7 +49,7 @@ export function WifiCard({ value, label, current, onChange }: WifiCardProps) {
 
 	// Base classes for the SVG paths
 	const arcBaseClass = "transition-all ease-in-out origin-bottom";
-	const inactiveColor = "text-zinc-700/50 opacity-50";
+	const inactiveColor = "text-muted-foreground/30";
 
 	return (
 		<button
@@ -60,7 +60,7 @@ export function WifiCard({ value, label, current, onChange }: WifiCardProps) {
 					? cn(
 							"bg-primary/5 shadow-[inset_0_0_10px_0_rgba(0,0,0,0.05)] border-primary/20"
 					  )
-					: "border-white/5 bg-zinc-900/40 hover:bg-white/5 hover:border-white/10"
+					: "border-border bg-card hover:bg-muted"
 			)}
 		>
 			<div className="relative flex items-center justify-center w-full">
@@ -68,7 +68,10 @@ export function WifiCard({ value, label, current, onChange }: WifiCardProps) {
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 32 32"
-					className={cn("w-6 h-6", isSelected ? colorPalette : "text-zinc-600")}
+					className={cn(
+						"w-6 h-6",
+						isSelected ? colorPalette : "text-muted-foreground"
+					)}
 					fill="currentColor"
 				>
 					{/* ANIMATION STRATEGY:
@@ -149,7 +152,7 @@ export function WifiCard({ value, label, current, onChange }: WifiCardProps) {
 			<span
 				className={cn(
 					"text-[9px] font-medium tracking-wide transition-colors duration-300 leading-none",
-					isSelected ? "text-white" : "text-white/40"
+					isSelected ? "text-foreground" : "text-muted-foreground"
 				)}
 			>
 				{label}

@@ -3,6 +3,8 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
+import { ThemeProvider } from "@/app/components/theme-provider";
+
 const plusJakartaSans = Plus_Jakarta_Sans({
 	variable: "--font-plus-jakarta-sans",
 	subsets: ["latin"],
@@ -21,7 +23,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<ClerkProvider>
-			<html lang="en" className="dark" suppressHydrationWarning>
+			<html lang="en" suppressHydrationWarning>
 				<head>
 					<link
 						rel="stylesheet"
@@ -29,12 +31,19 @@ export default function RootLayout({
 					/>
 				</head>
 				<body
-					className={`${plusJakartaSans.variable} font-sans antialiased bg-black text-white overflow-hidden h-dvh w-screen flex items-center justify-center`}
+					className={`${plusJakartaSans.variable} font-sans antialiased bg-black text-foreground overflow-hidden h-dvh w-screen flex items-center justify-center`}
 					suppressHydrationWarning
 				>
-					<div className="relative w-full h-full max-w-[430px] bg-background-dark overflow-hidden shadow-2xl">
-						{children}
-					</div>
+					<ThemeProvider
+						attribute="class"
+						defaultTheme="dark"
+						enableSystem={false}
+						disableTransitionOnChange
+					>
+						<div className="relative w-full h-full max-w-[430px] bg-background overflow-hidden shadow-2xl">
+							{children}
+						</div>
+					</ThemeProvider>
 				</body>
 			</html>
 		</ClerkProvider>

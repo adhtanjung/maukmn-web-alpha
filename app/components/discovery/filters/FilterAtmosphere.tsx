@@ -18,7 +18,7 @@ export function FilterAtmosphere({
 }: FilterAtmosphereProps) {
 	return (
 		<div className="space-y-4">
-			<h3 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">
+			<h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
 				Vibe & Atmosphere
 			</h3>
 			<div className="grid grid-cols-3 gap-2">
@@ -41,7 +41,7 @@ export function FilterAtmosphere({
 								"h-[60px] w-full rounded-xl border flex flex-col items-center justify-center gap-1 transition-all p-0",
 								isSelected
 									? "border-primary bg-primary/20 text-primary font-bold shadow-[inset_0_0_0_1px_rgba(16,185,129,0.5)] hover:bg-primary/25 hover:text-primary"
-									: "border-white/10 bg-white/5 text-white/60 font-medium hover:bg-white/10 hover:border-white/20 hover:text-white"
+									: "border-border bg-card text-muted-foreground font-medium hover:bg-muted hover:text-foreground"
 							)}
 						>
 							<span
@@ -59,7 +59,7 @@ export function FilterAtmosphere({
 			</div>
 
 			<div className="space-y-2 pt-1">
-				<label className="text-xs font-medium text-white/90">Crowd</label>
+				<label className="text-xs font-medium text-foreground">Crowd</label>
 				<div className="flex flex-wrap gap-1.5">
 					{["Quiet / Study", "Social / Lively", "Business"].map((crowd) => {
 						const isSelected = crowdType.includes(
@@ -77,7 +77,7 @@ export function FilterAtmosphere({
 									"h-auto py-1.5 px-3 rounded-lg text-[11px] font-medium transition-all border",
 									isSelected
 										? "border-primary bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)]"
-										: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+										: "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
 								)}
 							>
 								{crowd}

@@ -12,7 +12,7 @@ import {
 import { MapPin } from "./components/Marker";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import BottomNav from "@/app/components/discovery/BottomNav";
+import BottomNav from "@/components/layout/BottomNav";
 import StickyHeader from "@/app/components/discovery/StickyHeader";
 import type maplibregl from "maplibre-gl";
 
@@ -790,7 +790,7 @@ function DiscoveryMapContent() {
 	};
 
 	return (
-		<main className="relative flex-1 w-full h-full overflow-hidden bg-background-dark">
+		<main className="relative flex-1 w-full h-full overflow-hidden bg-black">
 			{/* Custom Styles for Map View Pin Animations */}
 			<style jsx global>{`
 				.pin-bounce {
@@ -819,7 +819,7 @@ function DiscoveryMapContent() {
 						? `Directions to ${navigationDestination?.name}`
 						: "Map View"
 				}
-				className="absolute top-0 left-0 right-0 z-50 bg-background-dark/80 backdrop-blur-md pt-8"
+				className="absolute top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md pt-8"
 				rightAction={
 					<div className="flex size-10 items-center justify-center rounded-full hover:bg-white/10 cursor-pointer transition-colors">
 						<span className="material-symbols-outlined text-primary">
@@ -864,7 +864,7 @@ function DiscoveryMapContent() {
 								className={`h-10 px-4 rounded-full flex items-center gap-2 transition-all ${
 									travelMode === mode
 										? "bg-primary text-black font-bold"
-										: "bg-surface-dark/90 text-white border border-white/10"
+										: "bg-black/90 text-white border border-white/10"
 								}`}
 							>
 								<span className="material-symbols-outlined text-[18px]!">
@@ -882,7 +882,7 @@ function DiscoveryMapContent() {
 					{/* Route Info */}
 					{routeInfo && (
 						<div className="flex justify-center">
-							<div className="bg-surface-dark/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-3 pointer-events-auto">
+							<div className="bg-black/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-3 pointer-events-auto">
 								{isLoadingRoute ? (
 									<span className="material-symbols-outlined text-primary animate-spin text-[18px]">
 										progress_activity
@@ -909,7 +909,7 @@ function DiscoveryMapContent() {
 					<div className="flex justify-center gap-2 pointer-events-auto">
 						<Button
 							onClick={openInGoogleMaps}
-							className="h-9 px-3 rounded-full bg-surface-dark/90 text-white border border-white/10 text-xs font-medium flex items-center gap-1.5 hover:bg-white/10"
+							className="h-9 px-3 rounded-full bg-black/90 text-white border border-white/10 text-xs font-medium flex items-center gap-1.5 hover:bg-white/10"
 						>
 							<span className="material-symbols-outlined text-[16px]!">
 								open_in_new
@@ -918,7 +918,7 @@ function DiscoveryMapContent() {
 						</Button>
 						<Button
 							onClick={openInWaze}
-							className="h-9 px-3 rounded-full bg-surface-dark/90 text-white border border-white/10 text-xs font-medium flex items-center gap-1.5 hover:bg-white/10"
+							className="h-9 px-3 rounded-full bg-black/90 text-white border border-white/10 text-xs font-medium flex items-center gap-1.5 hover:bg-white/10"
 						>
 							<span className="material-symbols-outlined text-[16px]!">
 								open_in_new
@@ -931,9 +931,9 @@ function DiscoveryMapContent() {
 
 			{/* Top Search Overlay - Discovery Mode Only */}
 			{!isNavigationMode && (
-				<div className="absolute top-20 left-0 right-0 z-30 p-4 bg-linear-to-b from-background-dark/50 to-transparent flex flex-col gap-4 pointer-events-none">
+				<div className="absolute top-20 left-0 right-0 z-30 p-4 bg-linear-to-b from-black/50 to-transparent flex flex-col gap-4 pointer-events-none">
 					<div className="flex items-center gap-3 pointer-events-auto relative">
-						<div className="flex-1 h-12 bg-surface-dark/90 backdrop-blur-md rounded-full shadow-lg flex items-center px-4 border border-white/10 group transition-all focus-within:ring-2 focus-within:ring-primary/50">
+						<div className="flex-1 h-12 bg-black/90 backdrop-blur-md rounded-full shadow-lg flex items-center px-4 border border-white/10 group transition-all focus-within:ring-2 focus-within:ring-primary/50">
 							<span className="material-symbols-outlined text-muted-foreground group-focus-within:text-primary transition-colors">
 								search
 							</span>
@@ -970,14 +970,14 @@ function DiscoveryMapContent() {
 						</div>
 						<Button
 							size="icon"
-							className="h-12 w-12 bg-surface-dark/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all"
+							className="h-12 w-12 bg-black/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all"
 						>
 							<span className="material-symbols-outlined">tune</span>
 						</Button>
 
 						{/* Search Suggestions Dropdown */}
 						{showSuggestions && suggestions.length > 0 && (
-							<div className="absolute top-full left-0 right-16 mt-2 bg-surface-dark/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
+							<div className="absolute top-full left-0 right-16 mt-2 bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
 								{suggestions.map((suggestion, index) => (
 									<button
 										key={index}
@@ -998,7 +998,7 @@ function DiscoveryMapContent() {
 						<div className="flex justify-center animate-in fade-in slide-in-from-top-2 duration-200">
 							<Button
 								onClick={handleSearchArea}
-								className="bg-surface-dark/90 backdrop-blur-md border border-white/10 text-primary text-sm font-bold px-4 py-2 h-auto rounded-full shadow-lg flex items-center gap-2 transform active:scale-95 transition-all hover:bg-white/10 pointer-events-auto"
+								className="bg-black/90 backdrop-blur-md border border-white/10 text-primary text-sm font-bold px-4 py-2 h-auto rounded-full shadow-lg flex items-center gap-2 transform active:scale-95 transition-all hover:bg-white/10 pointer-events-auto"
 							>
 								<span className="material-symbols-outlined text-[18px]">
 									refresh
@@ -1012,7 +1012,7 @@ function DiscoveryMapContent() {
 
 			{/* Loading Indicator */}
 			{loading && (
-				<div className="absolute top-40 left-1/2 -translate-x-1/2 z-40 bg-surface-dark/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
+				<div className="absolute top-40 left-1/2 -translate-x-1/2 z-40 bg-black/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
 					<div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
 					<span className="text-sm text-white font-medium">Loading...</span>
 				</div>
@@ -1038,7 +1038,7 @@ function DiscoveryMapContent() {
 			<div className="absolute right-4 bottom-52 z-30 flex flex-col gap-3">
 				<Button
 					size="icon"
-					className="w-12 h-12 bg-surface-dark/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg text-white border border-white/10 active:scale-95 transition-all hover:bg-white/10"
+					className="w-12 h-12 bg-black/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg text-white border border-white/10 active:scale-95 transition-all hover:bg-white/10"
 				>
 					<span className="material-symbols-outlined">layers</span>
 				</Button>
@@ -1046,7 +1046,7 @@ function DiscoveryMapContent() {
 					size="icon"
 					onClick={handleMyLocation}
 					disabled={isLocating}
-					className="w-12 h-12 bg-surface-dark/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg text-white border border-white/10 active:scale-95 transition-all hover:bg-white/10 disabled:opacity-50"
+					className="w-12 h-12 bg-black/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg text-white border border-white/10 active:scale-95 transition-all hover:bg-white/10 disabled:opacity-50"
 				>
 					{isLocating ? (
 						<span className="material-symbols-outlined animate-spin">
@@ -1061,11 +1061,11 @@ function DiscoveryMapContent() {
 			{/* Bottom POI Card */}
 			{selectedPoi && (
 				<div className="absolute bottom-28 left-4 right-4 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
-					<div className="bg-surface-dark/95 backdrop-blur-xl rounded-lg p-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/10 flex gap-4 items-center relative">
+					<div className="bg-black/95 backdrop-blur-xl rounded-lg p-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/10 flex gap-4 items-center relative">
 						{/* Close Button */}
 						<button
 							onClick={() => setSelectedPoi(null)}
-							className="absolute -top-2 -right-2 w-8 h-8 bg-surface-dark border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-all active:scale-95 shadow-lg"
+							className="absolute -top-2 -right-2 w-8 h-8 bg-black border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-all active:scale-95 shadow-lg"
 							aria-label="Close"
 						>
 							<span className="material-symbols-outlined text-white text-[18px]">
@@ -1128,10 +1128,7 @@ function DiscoveryMapContent() {
 			)}
 
 			{/* Bottom Navigation */}
-			<BottomNav
-				onProfileClick={() => router.push("/profile")}
-				onCreateClick={() => router.push("/create-poi")}
-			/>
+			<BottomNav />
 		</main>
 	);
 }
