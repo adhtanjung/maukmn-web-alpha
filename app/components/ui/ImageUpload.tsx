@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 interface ImageUploadProps {
 	value?: string | null;
 	onChange: (url: string | null) => void;
+	onMultipleChange?: (urls: string[]) => void;
+	multiple?: boolean;
 	category?: "cover" | "gallery" | "profile" | "general";
 	aspectRatio?: "video" | "square";
 	className?: string;
@@ -23,6 +25,10 @@ interface UploadState {
 	isUploading: boolean;
 	progress: number;
 	error: string | null;
+	count?: {
+		current: number;
+		total: number;
+	};
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -30,6 +36,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export default function ImageUpload({
 	value,
 	onChange,
+	onMultipleChange,
+	multiple = false,
 	category = "general",
 	aspectRatio = "video",
 	className = "",
@@ -42,19 +50,15 @@ export default function ImageUpload({
 		error: null,
 	});
 
-	// R2 Upload Logic
-	const handleUploadProcess = async (file: File) => {
+	// Single File Upload Logic (Internal)
+	const uploadSingleFile = async (file: File): Promise<string | null> => {
 		try {
 			// Validate file type
 			if (!file.type.startsWith("image/")) {
-				setUploadState((s) => ({ ...s, error: "Please select an image file" }));
-				return;
+				throw new Error("Please select an image file");
 			}
 
-			setUploadState({ isUploading: true, progress: 10, error: null });
-
 			// Compress the image
-			setUploadState((s) => ({ ...s, progress: 30 }));
 			const options = {
 				maxSizeMB: 1,
 				maxWidthOrHeight: 1920,
@@ -67,11 +71,9 @@ export default function ImageUpload({
 				compressedFile = await imageCompression(file, options);
 			} catch (err) {
 				console.error("Compression error:", err);
-				// Continue with original file if compression fails
 			}
 
 			// Get presigned URL from backend
-			setUploadState((s) => ({ ...s, progress: 50 }));
 			const token = await getToken();
 			const presignRes = await fetch(`${API_URL}/api/v1/uploads/presign`, {
 				method: "POST",
@@ -86,15 +88,12 @@ export default function ImageUpload({
 				}),
 			});
 
-			if (!presignRes.ok) {
-				throw new Error("Failed to get upload URL");
-			}
+			if (!presignRes.ok) throw new Error("Failed to get upload URL");
 
 			const response = await presignRes.json();
 			const { upload_url, public_url } = response.data;
 
 			// Upload directly to R2
-			setUploadState((s) => ({ ...s, progress: 70 }));
 			const uploadRes = await fetch(upload_url, {
 				method: "PUT",
 				headers: {
@@ -103,21 +102,68 @@ export default function ImageUpload({
 				body: compressedFile,
 			});
 
-			if (!uploadRes.ok) {
-				throw new Error("Failed to upload image");
-			}
+			if (!uploadRes.ok) throw new Error("Failed to upload image");
 
-			// Success!
-			setUploadState({ isUploading: false, progress: 100, error: null });
-			onChange(public_url);
+			return public_url;
 		} catch (error) {
 			console.error("Upload error:", error);
+			throw error;
+		}
+	};
+
+	const handleUploadProcess = async (file: File) => {
+		setUploadState({ isUploading: true, progress: 10, error: null });
+		try {
+			const url = await uploadSingleFile(file);
+			setUploadState({ isUploading: false, progress: 100, error: null });
+			onChange(url);
+		} catch (error) {
 			setUploadState({
 				isUploading: false,
 				progress: 0,
 				error: error instanceof Error ? error.message : "Upload failed",
 			});
-			onChange(null); // Clear value on error
+			onChange(null);
+		}
+	};
+
+	const handleMultipleUploadProcess = async (
+		items: { url: string; file: File }[]
+	) => {
+		setUploadState({
+			isUploading: true,
+			progress: 0,
+			error: null,
+			count: { current: 0, total: items.length },
+		});
+
+		const urls: string[] = [];
+		let errorOccurred = false;
+
+		for (let i = 0; i < items.length; i++) {
+			setUploadState((s) => ({
+				...s,
+				count: { current: i + 1, total: items.length },
+				progress: Math.round(((i + 1) / items.length) * 100),
+			}));
+
+			try {
+				const url = await uploadSingleFile(items[i].file);
+				if (url) urls.push(url);
+			} catch (error) {
+				console.error(`Failed to upload file ${i + 1}:`, error);
+				errorOccurred = true;
+			}
+		}
+
+		setUploadState({
+			isUploading: false,
+			progress: 100,
+			error: errorOccurred ? "Some uploads failed" : null,
+		});
+
+		if (urls.length > 0) {
+			onMultipleChange?.(urls);
 		}
 	};
 
@@ -129,6 +175,7 @@ export default function ImageUpload({
 		handleRemove: hookHandleRemove,
 	} = useImageUpload({
 		onUpload: (_, file) => handleUploadProcess(file),
+		onMultipleUpload: (items) => handleMultipleUploadProcess(items),
 	});
 
 	const [isDragging, setIsDragging] = useState(false);
@@ -156,14 +203,14 @@ export default function ImageUpload({
 			e.stopPropagation();
 			setIsDragging(false);
 
-			const file = e.dataTransfer.files?.[0];
-			if (file && file.type.startsWith("image/")) {
-				// Manually trigger file change handler with the dropped file
-				// We need to construct a synthetic event or just call upload process directly
-				// The hook expects a ChangeEvent, let's try to mimic or just reuse logic
+			const files = Array.from(e.dataTransfer.files).filter((file) =>
+				file.type.startsWith("image/")
+			);
+
+			if (files.length > 0) {
 				const fakeEvent = {
 					target: {
-						files: [file],
+						files: files,
 					},
 				} as unknown as React.ChangeEvent<HTMLInputElement>;
 				handleFileChange(fakeEvent);
@@ -191,6 +238,7 @@ export default function ImageUpload({
 				className="hidden"
 				ref={fileInputRef}
 				onChange={handleFileChange}
+				multiple={multiple}
 			/>
 
 			{!displayUrl ? (
@@ -209,22 +257,18 @@ export default function ImageUpload({
 					<div className="rounded-full bg-background p-3 shadow-sm ring-1 ring-border">
 						<ImagePlus className="h-6 w-6 text-muted-foreground" />
 					</div>
-					{/* <div className="text-center px-4">
-						{aspectRatio === "square" ? (
-							<p className="text-xs font-medium text-muted-foreground">
-								Add Photo
+
+					{/* Uploading Overlay for empty state */}
+					{uploadState.isUploading && (
+						<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center text-center px-4 rounded-sm">
+							<Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+							<p className="text-white text-xs font-medium">
+								{uploadState.count
+									? `Uploading ${uploadState.count.current}/${uploadState.count.total}`
+									: `Uploading ${uploadState.progress}%`}
 							</p>
-						) : (
-							<>
-								<p className="text-sm font-medium text-foreground">
-									Click to select
-								</p>
-								<p className="text-xs text-muted-foreground mt-1">
-									or drag and drop file here (max 10MB)
-								</p>
-							</>
-						)}
-					</div> */}
+						</div>
+					)}
 				</div>
 			) : (
 				<div className="relative group">
@@ -247,10 +291,12 @@ export default function ImageUpload({
 
 						{/* Uploading Overlay */}
 						{uploadState.isUploading && (
-							<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center">
+							<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center text-center px-4">
 								<Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
 								<p className="text-white text-xs font-medium">
-									Uploading {uploadState.progress}%
+									{uploadState.count
+										? `Uploading ${uploadState.count.current}/${uploadState.count.total}`
+										: `Uploading ${uploadState.progress}%`}
 								</p>
 							</div>
 						)}

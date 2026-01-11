@@ -434,6 +434,12 @@ export default function ProfileVisualsTab() {
 														field.onChange([...(field.value || []), url]);
 													}
 												}}
+												multiple
+												onMultipleChange={(urls) => {
+													const current = field.value || [];
+													const combined = [...current, ...urls].slice(0, 10);
+													field.onChange(combined);
+												}}
 												category="gallery"
 												aspectRatio="square"
 												className="w-full h-full"
@@ -455,15 +461,58 @@ export default function ProfileVisualsTab() {
 			{/* Image Preview Modal */}
 			{previewImage && (
 				<div
-					className="absolute inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
+					className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
 					onClick={() => setPreviewImage(null)}
 				>
 					<button
-						className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+						className="absolute top-6 right-6 text-white hover:text-primary transition-colors z-50"
 						onClick={() => setPreviewImage(null)}
 					>
 						<span className="material-symbols-outlined text-3xl">close</span>
 					</button>
+
+					{/* Navigation Arrows for Gallery */}
+					{watch("galleryImages")?.includes(previewImage.src) && (
+						<>
+							<button
+								className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors z-50"
+								onClick={(e) => {
+									e.stopPropagation();
+									const gallery = watch("galleryImages") || [];
+									const idx = gallery.indexOf(previewImage.src);
+									const newIdx = (idx - 1 + gallery.length) % gallery.length;
+									setPreviewImage({
+										src: gallery[newIdx],
+										alt: `Gallery Image ${newIdx + 1}`,
+										label: "Gallery Preview",
+									});
+								}}
+							>
+								<span className="material-symbols-outlined text-3xl">
+									chevron_left
+								</span>
+							</button>
+							<button
+								className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors z-50"
+								onClick={(e) => {
+									e.stopPropagation();
+									const gallery = watch("galleryImages") || [];
+									const idx = gallery.indexOf(previewImage.src);
+									const newIdx = (idx + 1) % gallery.length;
+									setPreviewImage({
+										src: gallery[newIdx],
+										alt: `Gallery Image ${newIdx + 1}`,
+										label: "Gallery Preview",
+									});
+								}}
+							>
+								<span className="material-symbols-outlined text-3xl">
+									chevron_right
+								</span>
+							</button>
+						</>
+					)}
+
 					<div
 						className="relative w-full max-w-4xl max-h-[85vh] rounded-xl overflow-hidden bg-background shadow-2xl"
 						onClick={(e) => e.stopPropagation()}
