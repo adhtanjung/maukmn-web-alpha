@@ -10,6 +10,14 @@ Sentry.init({
 	// Set to true to see Sentry initialization logs in console (remove in production)
 	debug: true,
 
+	// Add integrations
+	integrations: [
+		// Capture console.log, console.error, etc. and send to Sentry Logs
+		Sentry.consoleLoggingIntegration({
+			levels: ["log", "info", "warn", "error", "debug"],
+		}),
+	],
+
 	// Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
 	tracesSampleRate: 1,
 

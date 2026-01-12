@@ -11,7 +11,13 @@ Sentry.init({
 	debug: true,
 
 	// Add optional integrations for additional features
-	integrations: [Sentry.replayIntegration()],
+	integrations: [
+		Sentry.replayIntegration(),
+		// Capture console.log, console.error, etc. and send to Sentry Logs
+		Sentry.consoleLoggingIntegration({
+			levels: ["log", "info", "warn", "error", "debug"],
+		}),
+	],
 
 	// Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
 	tracesSampleRate: 1,
