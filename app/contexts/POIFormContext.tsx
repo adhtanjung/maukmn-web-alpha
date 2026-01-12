@@ -6,6 +6,7 @@ import React, {
 	useState,
 	useCallback,
 	useEffect,
+	useRef,
 	ReactNode,
 } from "react";
 import { useAuth } from "@clerk/nextjs";
@@ -60,6 +61,9 @@ export function POIFormProvider({
 	const [isSaving, setIsSaving] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+	// Track in-flight section saves to prevent concurrent calls
+	const savingPendingRef = useRef<Set<string>>(new Set());
 
 	// API base URL from environment
 	const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -313,12 +317,22 @@ export function POIFormProvider({
 
 	const saveSection = useCallback(
 		async (sectionName: string) => {
+			// Prevent concurrent saves for the same section
+			// This prevents 500 errors from database race conditions
+			if (savingPendingRef.current.has(sectionName)) {
+				console.log(`Skipping duplicate save for section: ${sectionName}`);
+				return;
+			}
+
 			if (!draftId) {
 				// If no ID yet (first tab of create mode), we must create the POI first
 				// using the standard saveDraft logic which hits POST /pois
 				await saveDraft();
 				return;
 			}
+
+			// Mark this section as being saved
+			savingPendingRef.current.add(sectionName);
 
 			// Map section name to endpoint and data fields
 			let endpoint = "";
@@ -441,6 +455,8 @@ export function POIFormProvider({
 				console.error(`Save ${sectionName} error:`, error);
 				throw error;
 			} finally {
+				// Remove from pending saves to allow future saves
+				savingPendingRef.current.delete(sectionName);
 				setIsSaving(false);
 			}
 		},
