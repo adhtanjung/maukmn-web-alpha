@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { Button } from "@/components/ui/button";
 import { usePOIForm } from "../../contexts/POIFormContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import * as Sentry from "@sentry/nextjs";
 
 // Lazy load all tab components for better performance
 const ProfileVisualsTab = lazy(() => import("./ProfileVisualsTab"));
@@ -316,6 +317,7 @@ export default function CreatePOIOverlay({
 			}
 		} catch (error: unknown) {
 			console.error("Failed to submit:", error);
+			Sentry.captureException(error);
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error";
 

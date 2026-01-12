@@ -182,7 +182,14 @@ export function POIFormProvider({
 				}),
 			});
 
-			if (!response.ok) throw new Error("Failed to save");
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				throw new Error(
+					errorData.message ||
+						errorData.error ||
+						`Failed to save: ${response.statusText}`
+				);
+			}
 
 			const data = await response.json();
 			let currentDraftId = draftId;
