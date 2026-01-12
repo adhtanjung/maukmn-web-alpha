@@ -51,10 +51,8 @@ export default withSentryConfig(nextConfig, {
 		// https://vercel.com/docs/cron-jobs
 		automaticVercelMonitors: true,
 
-		// Tree-shaking options for reducing bundle size
-		treeshake: {
-			// Automatically tree-shake Sentry logger statements to reduce bundle size
-			removeDebugLogging: true,
-		},
+		// NOTE: removeDebugLogging was removed because it was stripping Sentry logging statements
+		// from the bundle, preventing errors and logs from being recorded.
+		// Only enable treeshake.removeDebugLogging in production if you explicitly don't want logs.
 	},
 });
