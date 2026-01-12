@@ -156,7 +156,8 @@ export default function CreatePOIOverlay({
 		if (mode === "edit") {
 			fetchSection(activeTab);
 		}
-	}, [mode, fetchSection]); // activeTab excluded to run only on mount/mode specific (or include if we want refetch on tab change handled here? no handleTabChange handles that)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- activeTab excluded intentionally: we only want to run on mount, tab changes are handled by handleTabChange
+	}, [mode, fetchSection]);
 
 	// Sync URL query param when tab changes
 	const handleTabChange = useCallback(
@@ -277,6 +278,35 @@ export default function CreatePOIOverlay({
 			}
 		} catch (error) {
 			console.error("Failed to save:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
+
+			// Authorization error (403) - draft belongs to different user
+			if (
+				errorMessage.toLowerCase().includes("not authorized") ||
+				errorMessage.toLowerCase().includes("forbidden")
+			) {
+				setSaveFeedback({
+					type: "error",
+					message:
+						"You don't have permission to save this POI. This draft may belong to a different account. Please discard and start fresh.",
+				});
+				return;
+			}
+
+			// Not found error (404) - POI was deleted
+			if (
+				errorMessage.toLowerCase().includes("not found") ||
+				errorMessage.toLowerCase().includes("poi not found")
+			) {
+				setSaveFeedback({
+					type: "error",
+					message:
+						"This POI no longer exists. It may have been deleted. Please discard and start fresh.",
+				});
+				return;
+			}
+
 			setSaveFeedback({
 				type: "error",
 				message: "Failed to save. Please try again.",
@@ -284,14 +314,16 @@ export default function CreatePOIOverlay({
 		}
 	};
 
-	const handleSubmit = async () => {
-		try {
-			// In edit mode, save the last tab (contact) first
-			if (mode === "edit") {
-				await saveSection(activeTab);
-			}
+	const [isSubmittingForm, setIsSubmittingForm] = useState(false);
 
-			// Wrapped in try-catch to catch network errors or throws from submitForReview
+	const handleSubmit = async () => {
+		// Prevent double-click / rapid submissions
+		if (isSubmittingForm) return;
+		setIsSubmittingForm(true);
+
+		try {
+			// Note: submitForReview already calls saveDraft() internally,
+			// so we don't need to call saveSection first
 			const result = await submitForReview();
 
 			// Check for standardized response structure if returned
@@ -329,11 +361,13 @@ export default function CreatePOIOverlay({
 				const fieldErrorMessage = parts.slice(2).join(":"); // Join in case message contains colons
 				const targetTab = FIELD_TO_TAB[fieldName];
 
+				// Use setActiveTab directly instead of handleTabChange
+				// to avoid triggering another save, which could cause a loop
 				if (targetTab) {
-					handleTabChange(targetTab);
-				} else {
-					// Fallback to first tab if field not mapped
-					handleTabChange("profile");
+					setActiveTab(targetTab);
+					const params = new URLSearchParams(searchParams.toString());
+					params.set("tab", targetTab);
+					router.replace(`?${params.toString()}`, { scroll: false });
 				}
 
 				// Show the actual field validation error message
@@ -346,10 +380,40 @@ export default function CreatePOIOverlay({
 				return;
 			}
 
+			// Check if this is an authorization error (403)
+			// This typically means the draft belongs to a different user
+			if (
+				errorMessage.toLowerCase().includes("not authorized") ||
+				errorMessage.toLowerCase().includes("forbidden")
+			) {
+				setSaveFeedback({
+					type: "error",
+					message:
+						"You don't have permission to edit this POI. This draft may belong to a different account. Please discard and start fresh.",
+				});
+				return;
+			}
+
+			// Check if POI was not found (404)
+			// This means the draft was deleted or never saved properly
+			if (
+				errorMessage.toLowerCase().includes("not found") ||
+				errorMessage.toLowerCase().includes("poi not found")
+			) {
+				setSaveFeedback({
+					type: "error",
+					message:
+						"This POI no longer exists. It may have been deleted. Please discard and start fresh.",
+				});
+				return;
+			}
+
 			setSaveFeedback({
 				type: "error",
 				message: `Error submitting POI: ${errorMessage}`,
 			});
+		} finally {
+			setIsSubmittingForm(false);
 		}
 	};
 
@@ -595,20 +659,32 @@ export default function CreatePOIOverlay({
 					</Button>
 					<Button
 						onClick={activeTab === "contact" ? handleSubmit : handleNext}
-						className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
+						disabled={isSubmittingForm || (activeTab === "contact" && isSaving)}
+						className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						{activeTab === "contact"
-							? mode === "edit"
-								? "Save Changes"
-								: "Submit for Review"
-							: "Next Step"}
-						<span className="material-symbols-outlined text-lg">
-							{activeTab === "contact"
-								? mode === "edit"
-									? "save"
-									: "send"
-								: "arrow_forward"}
-						</span>
+						{isSubmittingForm ? (
+							<>
+								<span className="material-symbols-outlined text-lg animate-spin">
+									progress_activity
+								</span>
+								Submitting...
+							</>
+						) : (
+							<>
+								{activeTab === "contact"
+									? mode === "edit"
+										? "Save Changes"
+										: "Submit for Review"
+									: "Next Step"}
+								<span className="material-symbols-outlined text-lg">
+									{activeTab === "contact"
+										? mode === "edit"
+											? "save"
+											: "send"
+										: "arrow_forward"}
+								</span>
+							</>
+						)}
 					</Button>
 				</div>
 			</div>

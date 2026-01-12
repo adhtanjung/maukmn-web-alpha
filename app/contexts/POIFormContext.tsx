@@ -54,10 +54,11 @@ export function POIFormProvider({
 	initialData,
 	initialDraftId,
 }: POIFormProviderProps) {
-	const { getToken } = useAuth();
+	const { getToken, userId } = useAuth();
 	// Initialize draftId with prop if provided
 	const [draftId, setDraftId] = useState<string | null>(initialDraftId || null);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
 	// API base URL from environment
@@ -69,6 +70,35 @@ export function POIFormProvider({
 		defaultValues: initialData || defaultPOIFormValues, // Use initialData if provided
 		mode: "onChange",
 	});
+
+	// Clear stale drafts when user changes (on auth state change)
+	// This prevents 403 errors when a user logs in with a different account
+	// that has a stale draft from a previous user in localStorage
+	useEffect(() => {
+		if (!userId) return; // Not logged in yet
+
+		const savedDraft = localStorage.getItem("poi-draft");
+		if (savedDraft) {
+			try {
+				const parsed = JSON.parse(savedDraft);
+				// If draft exists and belongs to a different user, clear it immediately
+				if (parsed.userId && parsed.userId !== userId) {
+					console.warn("[Auth] Clearing POI draft from previous user on login");
+					localStorage.removeItem("poi-draft");
+					// Also reset the form if we're not in edit mode
+					if (!initialData) {
+						setDraftId(null);
+						form.reset(defaultPOIFormValues);
+					}
+				}
+			} catch {
+				// Invalid JSON, clear it
+				localStorage.removeItem("poi-draft");
+			}
+		}
+		// This should only run when userId changes (auth state change)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [userId]);
 
 	// Load draft from localStorage on mount ONLY if no initialData is provided (fresh create mode)
 	useEffect(() => {
@@ -84,6 +114,15 @@ export function POIFormProvider({
 		if (savedDraft) {
 			try {
 				const parsed = JSON.parse(savedDraft);
+
+				// IMPORTANT: Validate that the saved draft belongs to the current user
+				// to prevent 403 errors from stale drafts created by a different user
+				if (parsed.userId && parsed.userId !== userId) {
+					console.warn("Clearing stale POI draft from different user");
+					localStorage.removeItem("poi-draft");
+					return;
+				}
+
 				if (parsed.formData) {
 					form.reset(parsed.formData);
 				}
@@ -94,7 +133,7 @@ export function POIFormProvider({
 				console.error("Failed to parse saved draft");
 			}
 		}
-	}, [form, initialData]);
+	}, [form, initialData, userId]);
 
 	// Auto-save to localStorage when form changes - ONLY for new creations (no initialData)
 	useEffect(() => {
@@ -102,15 +141,16 @@ export function POIFormProvider({
 
 		const subscription = form.watch((formData) => {
 			const timeout = setTimeout(() => {
+				// Include userId to validate ownership when loading
 				localStorage.setItem(
 					"poi-draft",
-					JSON.stringify({ formData, draftId })
+					JSON.stringify({ formData, draftId, userId })
 				);
 			}, 1000);
 			return () => clearTimeout(timeout);
 		});
 		return () => subscription.unsubscribe();
-	}, [form, draftId, initialData]);
+	}, [form, draftId, initialData, userId]);
 
 	const saveDraft = useCallback(async (): Promise<string | null> => {
 		const formData = form.getValues();
@@ -210,62 +250,66 @@ export function POIFormProvider({
 	const submitForReview = useCallback(async (): Promise<
 		ApiResponse<unknown>
 	> => {
-		// Validate form first
-		const isValid = await form.trigger();
-
-		// Check if there are any errors after triggering validation
-		const errors = form.formState.errors;
-		const hasErrors = Object.keys(errors).length > 0;
-
-		console.log("Form validation check:", {
-			isValid,
-			hasErrors,
-			errors,
-			formValues: form.getValues(),
-		});
-
-		if (hasErrors) {
-			const firstErrorField = Object.keys(errors)[0];
-			const firstError = errors[firstErrorField as keyof typeof errors];
-			const errorMessage = firstError?.message || "Please fix this field";
-			console.error("Validation errors:", errors);
-			// Include the first error field and its message for parsing
-			// Format: validation:fieldName:errorMessage
-			throw new Error(`validation:${firstErrorField}:${errorMessage}`);
+		// Prevent concurrent submissions
+		if (isSubmitting) {
+			throw new Error("Submission already in progress");
 		}
 
-		// Always save draft before submitting to ensure latest changes are captured
-		// saveDraft returns the ID, which is crucial when creating a new POI
-		const currentDraftId = await saveDraft();
+		setIsSubmitting(true);
 
-		if (!currentDraftId) {
-			throw new Error("Failed to create POI before submission");
-		}
+		try {
+			// Trigger validation first
+			await form.trigger();
 
-		const token = await getToken();
-		const response = await fetch(
-			`${API_URL}/api/v1/pois/${currentDraftId}/submit`,
-			{
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
+			// Check if there are any errors after triggering validation
+			const errors = form.formState.errors;
+			const hasErrors = Object.keys(errors).length > 0;
+
+			if (hasErrors) {
+				const firstErrorField = Object.keys(errors)[0];
+				const firstError = errors[firstErrorField as keyof typeof errors];
+				const errorMessage = firstError?.message || "Please fix this field";
+				console.error("Validation errors:", errors);
+				// Include the first error field and its message for parsing
+				// Format: validation:fieldName:errorMessage
+				throw new Error(`validation:${firstErrorField}:${errorMessage}`);
 			}
-		);
 
-		const data = await response.json();
+			// Always save draft before submitting to ensure latest changes are captured
+			// saveDraft returns the ID, which is crucial when creating a new POI
+			const currentDraftId = await saveDraft();
 
-		if (!response.ok) {
-			throw new Error(data.message || data.error || "Failed to submit");
+			if (!currentDraftId) {
+				throw new Error("Failed to create POI before submission");
+			}
+
+			const token = await getToken();
+			const response = await fetch(
+				`${API_URL}/api/v1/pois/${currentDraftId}/submit`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.message || data.error || "Failed to submit");
+			}
+
+			// Clear local storage after successful submission
+			localStorage.removeItem("poi-draft");
+			form.reset(defaultPOIFormValues);
+			setDraftId(null);
+
+			return data;
+		} finally {
+			setIsSubmitting(false);
 		}
-
-		// Clear local storage after successful submission
-		localStorage.removeItem("poi-draft");
-		form.reset(defaultPOIFormValues);
-		setDraftId(null);
-
-		return data;
-	}, [draftId, saveDraft, getToken, API_URL, form]);
+	}, [isSubmitting, saveDraft, getToken, API_URL, form]);
 
 	const saveSection = useCallback(
 		async (sectionName: string) => {
