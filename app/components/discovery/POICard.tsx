@@ -149,7 +149,7 @@ export default function POICard({
 							x: { type: "spring", stiffness: 300, damping: 30 },
 							opacity: { duration: 0.2 },
 						}}
-						className="absolute inset-0 w-full h-full"
+						className="absolute inset-0 w-full h-full touch-pan-y"
 						drag="x"
 						dragConstraints={{ left: 0, right: 0 }}
 						dragElastic={1}

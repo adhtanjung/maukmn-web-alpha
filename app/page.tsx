@@ -1,8 +1,12 @@
 "use client";
 
+import { useRef, useCallback, useEffect } from "react";
 import { useFilteredPOIs } from "@/app/hooks/useFilters";
+import { POI } from "@/app/hooks/usePOIs";
 import TopHeader from "./components/discovery/TopHeader";
 import POICard from "./components/discovery/POICard";
+import FeedSeparator from "./components/discovery/FeedSeparator";
+import EndOfFeedCard from "./components/discovery/EndOfFeedCard";
 import BottomNav from "@/components/layout/BottomNav";
 import { useFilters } from "@/app/hooks/useFilters";
 
@@ -57,12 +61,54 @@ export default function Home() {
 	});
 
 	// Use filtered POIs hook
-	const { pois, loading, error, total } = useFilteredPOIs(queryString);
+	const { pois, loading, error, total, loadMore, hasMore } =
+		useFilteredPOIs(queryString);
+
+	const observer = useRef<IntersectionObserver | null>(null);
+	const lastPoiElementRef = useCallback(
+		(node: HTMLDivElement) => {
+			if (loading) return;
+			if (observer.current) observer.current.disconnect();
+			observer.current = new IntersectionObserver((entries) => {
+				if (entries[0].isIntersecting && hasMore) {
+					loadMore();
+				}
+			});
+			if (node) observer.current.observe(node);
+		},
+		[loading, hasMore, loadMore]
+	);
 
 	const handleMoreClick = (poiId: string) => {
 		// TODO: Open POI detail sheet
 		console.log("Open details for:", poiId);
 	};
+
+	// Keyboard navigation support
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+				e.preventDefault();
+				const container = document.querySelector(".snap-y");
+				if (!container) return;
+
+				const scrollAmount = container.clientHeight;
+				const currentScroll = container.scrollTop;
+				const targetScroll =
+					e.key === "ArrowDown"
+						? currentScroll + scrollAmount
+						: currentScroll - scrollAmount;
+
+				container.scrollTo({
+					top: targetScroll,
+					behavior: "smooth",
+				});
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, []);
 
 	return (
 		<main className="h-full w-full bg-background overflow-hidden relative">
@@ -71,7 +117,10 @@ export default function Home() {
 				onFiltersChange={(newFilters) => {
 					// Batch update filters
 					Object.entries(newFilters).forEach(([key, value]) => {
-						updateFilter(key as any, value);
+						updateFilter(
+							key as keyof import("@/app/hooks/useFilters").FilterState,
+							value
+						);
 					});
 				}}
 				onApply={() => {
@@ -83,8 +132,8 @@ export default function Home() {
 				loading={loading}
 			/>
 
-			<div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar scroll-smooth relative">
-				{loading ? (
+			<div className="h-full w-full overflow-y-scroll snap-y snap-mandatory snap-always no-scrollbar scroll-smooth relative">
+				{pois.length === 0 && loading ? (
 					<POICardSkeleton />
 				) : error ? (
 					<div className="w-full h-full flex items-center justify-center text-destructive">
@@ -93,14 +142,47 @@ export default function Home() {
 				) : pois.length === 0 ? (
 					<EmptyState />
 				) : (
-					pois.map((poi) => (
-						<POICard
-							key={poi.poi_id}
-							poi={poi}
-							distance="Nearby"
-							onMoreClick={() => handleMoreClick(poi.poi_id)}
-						/>
-					))
+					<>
+						{pois.map((poi, index) => {
+							const isLast = pois.length === index + 1;
+							// Render separator if this is the first suggested item
+							// Check if poi has "isSuggested" flag
+							// We cast to POI & { isSuggested?: boolean } to handle the extended property safely
+							const isSuggested = (poi as POI & { isSuggested?: boolean })
+								.isSuggested;
+							const prevWasMatch =
+								index > 0 &&
+								!(pois[index - 1] as POI & { isSuggested?: boolean })
+									.isSuggested;
+							const showSeparator =
+								isSuggested && (index === 0 || prevWasMatch);
+
+							return (
+								<div key={`container-${poi.poi_id}`} className="contents">
+									{showSeparator && <FeedSeparator key="separator" />}
+									<div
+										ref={isLast ? lastPoiElementRef : undefined}
+										key={poi.poi_id}
+										className="h-full w-full snap-start snap-always shrink-0"
+									>
+										<POICard
+											poi={poi}
+											distance="Nearby"
+											onMoreClick={() => handleMoreClick(poi.poi_id)}
+										/>
+									</div>
+								</div>
+							);
+						})}
+						{loading && (
+							<div className="h-full w-full snap-start snap-always shrink-0">
+								<POICardSkeleton />
+							</div>
+						)}
+						{!loading && !hasMore && pois.length > 0 && (
+							<EndOfFeedCard onReset={resetFilters} />
+						)}
+					</>
 				)}
 			</div>
 

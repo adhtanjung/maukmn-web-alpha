@@ -133,13 +133,16 @@ function Map({ children, styles, onClick, ...props }: MapProps) {
 
 	const isLoading = !isMounted || !isLoaded || !isStyleLoaded;
 
+	const mapContextValue = useMemo(
+		() => ({
+			map: mapRef.current,
+			isLoaded: isMounted && isLoaded && isStyleLoaded,
+		}),
+		[isMounted, isLoaded, isStyleLoaded]
+	);
+
 	return (
-		<MapContext.Provider
-			value={{
-				map: mapRef.current,
-				isLoaded: isMounted && isLoaded && isStyleLoaded,
-			}}
-		>
+		<MapContext.Provider value={mapContextValue}>
 			<div ref={containerRef} className="relative w-full h-full">
 				{isLoading && <DefaultLoader />}
 				{/* guard against hydration error */}
@@ -197,11 +200,21 @@ function MapMarker({
 	const [isReady, setIsReady] = useState(false);
 	const markerOptionsRef = useRef(markerOptions);
 
+	// Create container once
+	const container = useMemo(() => {
+		const el = document.createElement("div");
+		// Ensure it's reachable for events
+		el.style.display = "block";
+		return el;
+	}, []);
+
+	// Keep ref updated
+	useEffect(() => {
+		markerElementRef.current = container;
+	}, [container]);
+
 	useEffect(() => {
 		if (!isLoaded || !map) return;
-
-		const container = document.createElement("div");
-		markerElementRef.current = container;
 
 		const marker = new MapLibreGL.Marker({
 			...markerOptions,
@@ -217,6 +230,7 @@ function MapMarker({
 		const handleMouseEnter = (e: MouseEvent) => onMouseEnter?.(e);
 		const handleMouseLeave = (e: MouseEvent) => onMouseLeave?.(e);
 
+		// We attach listeners to the container which is now stable
 		container.addEventListener("click", handleClick);
 		container.addEventListener("mouseenter", handleMouseEnter);
 		container.addEventListener("mouseleave", handleMouseLeave);
@@ -241,20 +255,25 @@ function MapMarker({
 		setIsReady(true);
 
 		return () => {
+			// Clean up listeners
 			container.removeEventListener("click", handleClick);
 			container.removeEventListener("mouseenter", handleMouseEnter);
 			container.removeEventListener("mouseleave", handleMouseLeave);
 
+			// Clean up marker events
 			marker.off("dragstart", handleDragStart);
 			marker.off("drag", handleDrag);
 			marker.off("dragend", handleDragEnd);
 
 			marker.remove();
 			markerRef.current = null;
-			markerElementRef.current = null;
+			// We DO NOT set markerElementRef.current to null here because
+			// the container itself persists in useMemo and might be reused or
+			// we want to avoid null checks failing mid-render if React batches.
+			// But for safety, we can leave it.
 			setIsReady(false);
 		};
-	}, [map, isLoaded]);
+	}, [map, isLoaded]); // Removed dependencies that shouldn't re-create marker
 
 	useEffect(() => {
 		markerRef.current?.setLngLat([longitude, latitude]);
@@ -288,10 +307,13 @@ function MapMarker({
 		markerOptionsRef.current = markerOptions;
 	}, [markerOptions]);
 
+	const markerContextValue = useMemo(
+		() => ({ markerRef, markerElementRef, map, isReady }),
+		[map, isReady]
+	);
+
 	return (
-		<MarkerContext.Provider
-			value={{ markerRef, markerElementRef, map, isReady }}
-		>
+		<MarkerContext.Provider value={markerContextValue}>
 			{children}
 		</MarkerContext.Provider>
 	);

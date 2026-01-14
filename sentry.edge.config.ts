@@ -9,7 +9,7 @@ Sentry.init({
 	dsn: "https://d76898708bc8f72ab54dc8bda03fbb66@o4510691744088064.ingest.us.sentry.io/4510691744284672",
 
 	// Set to true to see Sentry initialization logs in console (remove in production)
-	debug: true,
+	// debug: true,
 
 	// Add integrations
 	integrations: [

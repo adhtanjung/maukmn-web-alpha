@@ -43,9 +43,9 @@
 
 	--image-gradient-fade: linear-gradient(
 		to top,
-		rgba(0, 0, 0, 1) 0%,
-		rgba(0, 0, 0, 0.8) 25%,
-		rgba(0, 0, 0, 0) 100%
+		rgba(24, 24, 27, 1) 0%,
+		/* Obsidian Fade */ rgba(24, 24, 27, 0.8) 25%,
+		rgba(24, 24, 27, 0) 100%
 	);
 }
 
@@ -69,116 +69,119 @@
 @layer base {
 	:root {
 		/*
-      Maukemana "Tropical Modernist" Palette
-      1. Deep Tropical Emerald: #0A5C44
-      2. Jakarta Sunset: #FF6B4A
-      3. Bali Sand: #FDFBF7
-      4. Volcanic Slate: #1E293B
-      5. Soft Mist: #E2E8F0 / Leaf Tint: #DCF2E9
-    */
+          Maukemana "Tactical Day" Palette (Light Mode)
+          - High Contrast Flight Manual Style
+        */
 
-		/* Backgrounds: Bali Sand */
-		--background: #fdfbf7;
-		--foreground: #1e293b; /* Volcanic Slate */
+		/* Backgrounds: Ice White */
+		--background: #ffffff;
+		--foreground: #18181b; /* Obsidian Text */
 
 		/* Cards & Surfaces */
-		--card: #fdfbf7;
-		--card-foreground: #1e293b;
-		--popover: #fdfbf7;
-		--popover-foreground: #1e293b;
+		--card: #f4f4f5; /* Zinc-100 */
+		--card-foreground: #18181b;
+		--popover: #ffffff;
+		--popover-foreground: #18181b;
 
-		/* Brand Primary: Deep Tropical Emerald */
-		--primary: #0a5c44;
-		--primary-foreground: #fdfbf7; /* Sand on Emerald */
+		/* Brand Primary: Blaze Orange */
+		--primary: #ff4500;
+		--primary-foreground: #ffffff;
 
-		/* Brand Secondary: Jakarta Sunset */
-		--secondary: #ff6b4a;
-		--secondary-foreground: #ffffff; /* White on Orange */
+		/* Brand Secondary: Platinum (Used for Rank Badges) */
+		--secondary: #e4e4e7; /* Zinc-200 */
+		--secondary-foreground: #18181b;
 
-		/* Muted: Leaf Tint for backgrounds, Slate for text */
-		--muted: #dcf2e9;
-		--muted-foreground: #64748b; /* Slate-500 equivalent */
+		/* Muted */
+		--muted: #f4f4f5;
+		--muted-foreground: #71717a; /* Zinc-500 */
 
-		/* Accent: Leaf Tint */
-		--accent: #dcf2e9;
-		--accent-foreground: #0a5c44;
+		/* Accent: Light Orange Tint for hovers */
+		--accent: #fff7ed; /* Orange-50 */
+		--accent-foreground: #ff4500;
 
 		/* Neutrals */
-		--border: #e2e8f0; /* Soft Mist */
-		--input: #e2e8f0;
-		--ring: #0a5c44;
+		--border: #e4e4e7; /* Zinc-200 */
+		--input: #e4e4e7;
+		--ring: #ff4500;
 
-		/* Sidebar (matches standard background or specific brand) */
-		--sidebar: #fdfbf7;
-		--sidebar-foreground: #1e293b;
-		--sidebar-primary: #0a5c44;
-		--sidebar-primary-foreground: #fdfbf7;
-		--sidebar-accent: #dcf2e9;
-		--sidebar-accent-foreground: #0a5c44;
-		--sidebar-border: #e2e8f0;
-		--sidebar-ring: #0a5c44;
+		/* Sidebar */
+		--sidebar: #f4f4f5;
+		--sidebar-foreground: #18181b;
+		--sidebar-primary: #ff4500;
+		--sidebar-primary-foreground: #ffffff;
+		--sidebar-accent: #e4e4e7;
+		--sidebar-accent-foreground: #18181b;
+		--sidebar-border: #e4e4e7;
+		--sidebar-ring: #ff4500;
 
+		/* Destructive */
 		--destructive: #ef4444;
 		--destructive-foreground: #ffffff;
 
 		--radius: 0.75rem;
 
-		/* Chart colors - keeping defaults or could map to brand */
-		--chart-1: #0a5c44;
-		--chart-2: #ff6b4a;
-		--chart-3: #1e293b;
-		--chart-4: #dcf2e9;
-		--chart-5: #e2e8f0;
+		/* Chart colors (Mapped for Logic) */
+		--chart-1: #ff4500; /* Blaze Orange (Primary) */
+		--chart-2: #00e096; /* Neon Mint (Verified/Success) */
+		--chart-3: #18181b; /* Obsidian (Dark details) */
+		--chart-4: #3b82f6; /* Info Blue */
+		--chart-5: #e4e4e7; /* Zinc */
 	}
 
 	.dark {
-		/* Backgrounds: Volcanic Slate */
-		--background: #1e293b;
-		--foreground: #fdfbf7; /* Bali Sand */
+		/*
+          Maukemana "Magma & Obsidian" Palette (Dark Mode - Default)
+          - The Tactical Scout Experience
+        */
 
-		/* Cards: Volcanic Slate */
-		--card: #1e293b;
-		--card-foreground: #fdfbf7;
-		--popover: #1e293b;
-		--popover-foreground: #fdfbf7;
+		/* Backgrounds: Obsidian (Zinc-950) - Not pure black */
+		--background: #18181b;
+		--foreground: #fafafa; /* Zinc-50 */
 
-		/* Primary: Emerald */
-		--primary: #0a5c44;
+		/* Cards: Smoked Glass (Zinc-900) */
+		--card: #27272a;
+		--card-foreground: #fafafa;
+		--popover: #27272a;
+		--popover-foreground: #fafafa;
+
+		/* Primary: Blaze Orange (Still pops on dark) */
+		--primary: #ff4500;
 		--primary-foreground: #ffffff;
 
-		/* Secondary: Jakarta Sunset pops well on dark */
-		--secondary: #ff6b4a;
-		--secondary-foreground: #ffffff;
+		/* Secondary: Platinum / Silver (For Juragan Badges) */
+		--secondary: #f4f4f5; /* Zinc-100 */
+		--secondary-foreground: #18181b; /* Dark text on Badge */
 
-		/* Muted: Darker Slate */
-		--muted: #0f172a; /* Slate 900 */
-		--muted-foreground: #94a3b8; /* Slate 400 */
+		/* Muted: Deep Grey */
+		--muted: #27272a;
+		--muted-foreground: #a1a1aa; /* Zinc-400 */
 
-		/* Accent: Darker Slate or Emerald tint? */
-		--accent: #2d3748; /* Slate 700ish */
-		--accent-foreground: #fdfbf7;
+		/* Accent: Smoked Glass Hover */
+		--accent: #3f3f46; /* Zinc-700 */
+		--accent-foreground: #fafafa;
 
-		--border: #334155; /* Slate 700 */
-		--input: #334155;
-		--ring: #0a5c44;
+		--border: #27272a; /* Soft borders for glass effect */
+		--input: #27272a;
+		--ring: #ff4500; /* Orange Focus Rings */
 
-		--sidebar: #1e293b;
-		--sidebar-foreground: #fdfbf7;
-		--sidebar-primary: #0a5c44;
+		--sidebar: #18181b;
+		--sidebar-foreground: #fafafa;
+		--sidebar-primary: #ff4500;
 		--sidebar-primary-foreground: #ffffff;
-		--sidebar-accent: #2d3748;
-		--sidebar-accent-foreground: #fdfbf7;
-		--sidebar-border: #334155;
-		--sidebar-ring: #0a5c44;
+		--sidebar-accent: #27272a;
+		--sidebar-accent-foreground: #fafafa;
+		--sidebar-border: #27272a;
+		--sidebar-ring: #ff4500;
 
 		--destructive: #7f1d1d;
-		--destructive-foreground: #fdfbf7;
+		--destructive-foreground: #fafafa;
 
-		--chart-1: #0a5c44;
-		--chart-2: #ff6b4a;
-		--chart-3: #fdfbf7;
-		--chart-4: #dcf2e9;
-		--chart-5: #e2e8f0;
+		/* Chart colors re-mapped for Dark Mode */
+		--chart-1: #ff4500; /* Blaze Orange */
+		--chart-2: #00e096; /* Neon Mint (The "Verified" Signal) */
+		--chart-3: #f4f4f5; /* Platinum */
+		--chart-4: #60a5fa; /* Blue */
+		--chart-5: #3f3f46; /* Zinc-700 */
 	}
 }
 
@@ -190,10 +193,54 @@
 	* {
 		@apply border-border;
 	}
+	/* MapLibre Popup Overrides for Glassmorphism */
 	.maplibregl-popup-content {
-		@apply bg-transparent! shadow-none! p-0! rounded-none!;
+		@apply bg-card/90! backdrop-blur-md! shadow-xl! p-0! rounded-xl! border border-border!;
 	}
 	.maplibregl-popup-tip {
-		@apply hidden!;
+		@apply border-t-card/90!;
+	}
+	/* Close button styling for popups */
+	.maplibregl-popup-close-button {
+		@apply text-muted-foreground hover:text-primary text-xl px-2 py-1 rounded-tr-xl focus:outline-none!;
+	}
+
+	@keyframes pin-bounce {
+		0% {
+			transform: scale(0);
+			opacity: 0;
+		}
+		60% {
+			transform: scale(1.1);
+		}
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+
+	@keyframes pulse-ring {
+		0% {
+			transform: scale(0.8);
+			opacity: 0.5;
+			box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7); /* Orange Glow */
+		}
+		70% {
+			transform: scale(1);
+			opacity: 0;
+			box-shadow: 0 0 0 10px rgba(255, 69, 0, 0);
+		}
+		100% {
+			transform: scale(0.8);
+			opacity: 0;
+		}
+	}
+
+	.pin-bounce {
+		animation: pin-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+	}
+
+	.pulse-ring-orange {
+		animation: pulse-ring 2s infinite;
 	}
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export default function BottomNav() {
 	const router = useRouter();
+
 	// "Tropical Modernist" Floating Action Button
 	// Using Primary (Emerald) for the main action
 	// ring-background ensures a clean separation from the nav bar
@@ -38,12 +39,12 @@ export default function BottomNav() {
 					</span>
 				</Button>
 
-				{/* Floating Action Button (FAB) */}
+				{/* Floating Action Button (FAB) - Always Flag Planting */}
 				<div className="relative top-0">
 					<>
 						<SignedIn>
 							<Button
-								onClick={() => router.push("/create-poi")}
+								onClick={() => router.push("/flag-planting")}
 								className={createButtonStyles}
 							>
 								<span className="material-symbols-outlined text-3xl">add</span>

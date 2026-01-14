@@ -60,17 +60,49 @@ export default function ImageUpload({
 
 			// Compress the image
 			const options = {
-				maxSizeMB: 1,
+				maxSizeMB: 0.7, // Reduced from 1MB to 0.7MB to ensure we stay under the limit
 				maxWidthOrHeight: 1920,
 				useWebWorker: true,
 				fileType: "image/webp" as const,
+				initialQuality: 0.8, // Start with reasonable quality
 			};
 
 			let compressedFile = file;
 			try {
 				compressedFile = await imageCompression(file, options);
+
+				// Double check the size
+				if (compressedFile.size > 1024 * 1024) {
+					console.warn(
+						`Compression target missed. File size: ${(
+							compressedFile.size /
+							1024 /
+							1024
+						).toFixed(2)}MB. Retrying with lower quality...`
+					);
+					// Retry with stronger compression if still too big
+					const retryOptions = {
+						...options,
+						maxSizeMB: 0.5,
+						initialQuality: 0.6,
+					};
+					compressedFile = await imageCompression(file, retryOptions);
+				}
+
+				console.log(
+					`Original: ${(file.size / 1024 / 1024).toFixed(2)}MB, Compressed: ${(
+						compressedFile.size /
+						1024 /
+						1024
+					).toFixed(2)}MB`
+				);
 			} catch (err) {
 				console.error("Compression error:", err);
+				// Fallback to original file if compression impacts it too much or fails,
+				// but realistically we should probably fail or warn.
+				// For now, we'll keep the behavior of proceeding, but maybe with the original if it failed?
+				// Actually the original code just caught and logged, leaving compressedFile as original.
+				// We should probably keep that safety fallback.
 			}
 
 			// Get presigned URL from backend

@@ -252,63 +252,182 @@ export function useFilteredPOIs(queryString: string, enabled: boolean = true) {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [total, setTotal] = useState(0);
+	const [page, setPage] = useState(1);
+	const [hasMore, setHasMore] = useState(true);
 
-	const fetchFilteredPOIs = useCallback(async () => {
-		if (!enabled) return;
+	const fetchFilteredPOIs = useCallback(
+		async (pageNum: number = 1, append: boolean = false) => {
+			if (!enabled) return;
 
-		setLoading(true);
-		setError(null);
+			setLoading(true);
+			setError(null);
 
-		try {
-			// Query string from hook already includes params, but we ensure limit here if not present
-			const url = `${API_URL}/api/v1/pois?${queryString}`;
-			const finalUrl = url.includes("limit=") ? url : `${url}&limit=50`;
+			try {
+				// Query string from hook already includes params
+				const url = `${API_URL}/api/v1/pois?${queryString}`;
+				// Append paginaton params
+				const finalUrl = `${url}${
+					url.includes("limit=") ? "" : "&limit=50"
+				}&page=${pageNum}`;
 
-			const response = await fetch(finalUrl);
-			const data = await response.json();
+				const response = await fetch(finalUrl);
+				const data = await response.json();
 
-			if (!response.ok) {
-				throw new Error(data.message || "Failed to fetch POIs");
-			}
+				if (!response.ok) {
+					throw new Error(data.message || "Failed to fetch POIs");
+				}
 
-			// Handle response structure
-			let results: POI[] = [];
-			let count = 0;
+				// Handle response structure
+				let results: POI[] = [];
+				let count = 0;
 
-			if (data.success && data.data) {
-				if (data.data.data && Array.isArray(data.data.data)) {
-					// Paginated response
-					results = data.data.data;
-					count = data.data.total || results.length;
+				if (data.success && data.data) {
+					if (data.data.data && Array.isArray(data.data.data)) {
+						// Paginated response
+						results = data.data.data;
+						count = data.data.total || results.length;
+					} else if (Array.isArray(data.data)) {
+						// Flat array in data
+						results = data.data;
+						count = results.length;
+					}
 				} else if (Array.isArray(data.data)) {
-					// Flat array in data
 					results = data.data;
 					count = results.length;
+				} else {
+					// Fallback
+					results = [];
 				}
-			} else if (Array.isArray(data.data)) {
-				results = data.data;
-				count = results.length;
-			} else {
-				// Fallback
-				results = [];
-			}
 
-			setPois(results);
-			setTotal(count);
+				setPois((prev) => {
+					let updated: POI[];
+					if (append) {
+						const existingIds = new Set(prev.map((p) => p.poi_id));
+						const uniqueResults = results.filter(
+							(p) => !existingIds.has(p.poi_id)
+						);
+						updated = [...prev, ...uniqueResults];
+					} else {
+						updated = results;
+					}
+
+					// If this is the initial fetch (not appending) and results are low,
+					// we might want to expand the search.
+					if (!append && updated.length < 3) {
+						// Logic handled in a separate effect or subsequent call would be cleaner,
+						// but for simplicity, we trigger the expansion logic here or set a flag.
+						// However, since we need to fetch *different* data, we can't just do it synchronously.
+						// We'll trust the "auto-expand" logic below.
+					}
+
+					// Update hasMore based on total count
+					setHasMore(updated.length < count);
+					return updated;
+				});
+				setTotal(count);
+
+				// Return data for the expansion check
+				return { results, count };
+			} catch (err) {
+				console.error("Error fetching filtered POIs:", err);
+				setError(err instanceof Error ? err.message : "Failed to fetch POIs");
+				if (!append) {
+					setPois([]);
+					setTotal(0);
+				}
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[queryString, enabled]
+	);
+
+	// Function to fetch recommendations when results are low
+	const fetchRecommendations = useCallback(async () => {
+		try {
+			// Construct recommendation query - clear strict filters but keep status
+			// If location exists, keep it for "nearest" fallback, otherwise use recommended sort
+			const params = new URLSearchParams();
+			params.set("status", "approved");
+			params.set("sort_by", "recommended");
+			params.set("limit", "20"); // Fetch a batch of recommendations
+
+			const url = `${API_URL}/api/v1/pois?${params.toString()}`;
+			const response = await fetch(url);
+			const data = await response.json();
+
+			if (data.success && data.data) {
+				let recs: POI[] = [];
+				if (data.data.data && Array.isArray(data.data.data)) {
+					recs = data.data.data;
+				} else if (Array.isArray(data.data)) {
+					recs = data.data;
+				}
+
+				// Filter out duplicates (check against what's already in state to avoid races)
+				setPois((prev) => {
+					const currentIds = new Set(prev.map((p) => p.poi_id));
+					const newRecs = recs
+						.filter((p) => !currentIds.has(p.poi_id))
+						.map((p) => ({ ...p, isSuggested: true }));
+
+					if (newRecs.length > 0) {
+						// Update hasMore as side effect - this is safe inside setState callback
+						// but we need to do it outside. However, we can't reliably know if we added items
+						// unless we check here.
+						// Since we can't call setHasMore inside setPois updater (it's impure),
+						// we'll just append and trust the effect.
+						// Actually, to set hasMore correctly, we should calculate 'uniqueNewRecs' outside
+						// but 'prev' is only known inside.
+						// Accepted pattern:
+						return [...prev, ...newRecs];
+					}
+					// If no new records, return strictly prev to avoid re-renders
+					return prev;
+				});
+
+				// We'll optimistically enable scrolling if we got data from API, even if all were duplicates this time
+				// (unlikely to happen in normal expanding scenario)
+				if (recs.length > 0) {
+					setHasMore(true);
+				}
+			}
 		} catch (err) {
-			console.error("Error fetching filtered POIs:", err);
-			setError(err instanceof Error ? err.message : "Failed to fetch POIs");
-			setPois([]);
-			setTotal(0);
-		} finally {
-			setLoading(false);
+			console.error("Error fetching recommendations:", err);
 		}
-	}, [queryString, enabled]);
+	}, []);
 
 	// Automatically fetch when query string changes
 	useEffect(() => {
-		fetchFilteredPOIs();
-	}, [fetchFilteredPOIs]);
+		setPage(1);
+		setHasMore(true);
 
-	return { pois, loading, error, total, refetch: fetchFilteredPOIs };
+		fetchFilteredPOIs(1, false).then((data) => {
+			if (data && data.results.length < 3) {
+				// Result count is low, expand search
+				fetchRecommendations();
+			}
+		});
+	}, [fetchFilteredPOIs, queryString, fetchRecommendations]);
+
+	const loadMore = useCallback(() => {
+		if (!loading && hasMore) {
+			setPage((prev) => {
+				const nextPage = prev + 1;
+				fetchFilteredPOIs(nextPage, true);
+				return nextPage;
+			});
+		}
+	}, [loading, hasMore, fetchFilteredPOIs]);
+
+	return {
+		pois,
+		loading,
+		error,
+		total,
+		loadMore,
+		hasMore,
+		refetch: () => fetchFilteredPOIs(1, false),
+	};
 }
