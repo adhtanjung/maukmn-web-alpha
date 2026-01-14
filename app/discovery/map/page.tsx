@@ -510,16 +510,17 @@ function MapContent({
 				const clusterId = cluster.properties?.cluster_id;
 				const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
 
-				source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-					if (err) return;
-
+				try {
+					const zoom = await source.getClusterExpansionZoom(clusterId);
 					// Smooth zoom to the cluster expansion level
 					map.flyTo({
 						center: (cluster.geometry as any).coordinates,
-						zoom: (zoom || 15) + 0.5, // slightly more to ensure break
+						zoom: zoom + 0.5, // slightly more to ensure break
 						speed: 1.2,
 					});
-				});
+				} catch (err) {
+					console.error("Error getting cluster expansion zoom:", err);
+				}
 				return;
 			}
 
