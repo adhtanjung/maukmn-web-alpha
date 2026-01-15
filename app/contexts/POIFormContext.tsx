@@ -539,7 +539,9 @@ export function POIFormProvider({
 
 	const fetchSection = useCallback(
 		async (sectionName: string) => {
-			if (!draftId) return;
+			if (!draftId) {
+				return;
+			}
 
 			let endpoint = sectionName;
 			if (sectionName === "workprod") endpoint = "work-prod";

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
+import imageCompression from "browser-image-compression";
 
 interface VibeCheckOverlayProps {
 	imageSrc: string;
@@ -12,7 +13,7 @@ interface VibeCheckOverlayProps {
 	onSuccess: (poiId: string) => void;
 }
 
-type WifiQuality = "unknown" | "poor" | "moderate" | "excellent";
+type WifiQuality = "" | "slow" | "moderate" | "excellent";
 type PowerOutlets = "unknown" | "none" | "limited" | "plenty";
 
 export default function VibeCheckOverlay({
@@ -36,11 +37,122 @@ export default function VibeCheckOverlay({
 	}, [wifiSpeedInput]);
 
 	const wifiQuality: WifiQuality = useMemo(() => {
-		if (wifiSpeedMbps == null) return "unknown";
+		if (wifiSpeedMbps == null) return "";
 		if (wifiSpeedMbps > 50) return "excellent";
 		if (wifiSpeedMbps > 15) return "moderate";
-		return "poor";
+		return "slow";
 	}, [wifiSpeedMbps]);
+
+	// Helper: Convert data URL to File
+	const dataURLtoFile = (dataUrl: string, filename: string): File => {
+		const arr = dataUrl.split(",");
+		const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+		const bstr = atob(arr[1]);
+		let n = bstr.length;
+		const u8arr = new Uint8Array(n);
+		while (n--) {
+			u8arr[n] = bstr.charCodeAt(n);
+		}
+		return new File([u8arr], filename, { type: mime });
+	};
+
+	// Helper: Upload image via presign workflow (with compression)
+	const uploadImage = async (
+		dataUrl: string,
+		token: string
+	): Promise<string | null> => {
+		try {
+			const API_URL =
+				process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+			// Convert data URL to File
+			const originalFile = dataURLtoFile(dataUrl, `flag-${Date.now()}.jpg`);
+
+			// Compress the image (matching ImageUpload.tsx logic)
+			const compressionOptions = {
+				maxSizeMB: 0.7,
+				maxWidthOrHeight: 1920,
+				useWebWorker: true,
+				fileType: "image/webp" as const,
+				initialQuality: 0.8,
+			};
+
+			let compressedFile = originalFile;
+			try {
+				compressedFile = await imageCompression(
+					originalFile,
+					compressionOptions
+				);
+
+				// Retry with stronger compression if still too big
+				if (compressedFile.size > 1024 * 1024) {
+					console.warn(
+						`Compression target missed. File size: ${(
+							compressedFile.size /
+							1024 /
+							1024
+						).toFixed(2)}MB. Retrying...`
+					);
+					const retryOptions = {
+						...compressionOptions,
+						maxSizeMB: 0.5,
+						initialQuality: 0.6,
+					};
+					compressedFile = await imageCompression(originalFile, retryOptions);
+				}
+
+				console.log(
+					`Original: ${(originalFile.size / 1024 / 1024).toFixed(
+						2
+					)}MB, Compressed: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`
+				);
+			} catch (compressionError) {
+				console.error("Compression failed, using original:", compressionError);
+				// Fall back to original file if compression fails
+			}
+
+			// Get presigned URL
+			const presignRes = await fetch(`${API_URL}/api/v1/uploads/presign`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					filename: compressedFile.name.replace(/\.[^/.]+$/, ".webp"),
+					content_type: "image/webp",
+					category: "cover",
+				}),
+			});
+
+			if (!presignRes.ok) {
+				console.error("Failed to get presign URL");
+				return null;
+			}
+
+			const presignData = await presignRes.json();
+			const { upload_url, public_url } = presignData.data;
+
+			// Upload to R2
+			const uploadRes = await fetch(upload_url, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "image/webp",
+				},
+				body: compressedFile,
+			});
+
+			if (!uploadRes.ok) {
+				console.error("Failed to upload image");
+				return null;
+			}
+
+			return public_url;
+		} catch (error) {
+			console.error("Image upload error:", error);
+			return null;
+		}
+	};
 
 	const handleSubmit = async () => {
 		if (!name.trim()) {
@@ -57,13 +169,20 @@ export default function VibeCheckOverlay({
 			const API_URL =
 				process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+			// Upload the captured image first
+			let coverImageUrl: string | null = null;
+			if (imageSrc) {
+				coverImageUrl = await uploadImage(imageSrc, token);
+			}
+
 			const basePayload: Record<string, unknown> = {
 				name: name.trim(),
 				wifi_quality: wifiQuality,
 				wifi_speed_mbps: wifiSpeedMbps,
-				power_outlets: powerStatus,
+				power_outlets: powerStatus === "unknown" ? "" : powerStatus,
 				ergonomic_seating: ergonomics,
 				status: "pending",
+				cover_image_url: coverImageUrl,
 			};
 
 			// Get geolocation (required for POI placement)
@@ -97,7 +216,7 @@ export default function VibeCheckOverlay({
 				throw new Error(data?.message || data?.error || "Planting failed");
 			}
 
-			onSuccess(data.poi_id);
+			onSuccess(data.data?.poi_id || data.poi_id);
 		} catch (error: unknown) {
 			console.error(error);
 			const message =
