@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
+import imageCompression from "browser-image-compression";
 
 interface VibeCheckOverlayProps {
 	imageSrc: string;
@@ -73,7 +74,8 @@ export default function VibeCheckOverlay({
 		token: string | null,
 	): Promise<string> => {
 		const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-		const maxAttempts = 20;
+		// Increased timeout to 60s for handling large high-res images
+		const maxAttempts = 60;
 		const interval = 1000;
 
 		for (let i = 0; i < maxAttempts; i++) {
@@ -111,6 +113,33 @@ export default function VibeCheckOverlay({
 
 			// Convert data URL to File
 			const originalFile = dataURLtoFile(dataUrl, `flag-${Date.now()}.jpg`);
+			let fileToUpload = originalFile;
+
+			// Client-side Compression
+			try {
+				const options = {
+					maxSizeMB: 1.5,
+					maxWidthOrHeight: 2048,
+					useWebWorker: true,
+					initialQuality: 0.8,
+					fileType: "image/jpeg",
+				};
+
+				// Only compress if larger than 1.5MB
+				if (originalFile.size > 1.5 * 1024 * 1024) {
+					console.log("Compressing capture client-side...", originalFile.name);
+					const compressedFile = await imageCompression(originalFile, options);
+					fileToUpload = new File([compressedFile], originalFile.name, {
+						type: compressedFile.type,
+						lastModified: Date.now(),
+					});
+					console.log(
+						`Compression complete: ${(originalFile.size / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`,
+					);
+				}
+			} catch (err) {
+				console.warn("Compression failed, using original", err);
+			}
 
 			// Get presigned URL
 			const presignRes = await fetch(`${API_URL}/api/v1/uploads/presign`, {
@@ -120,8 +149,8 @@ export default function VibeCheckOverlay({
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					filename: originalFile.name,
-					content_type: originalFile.type,
+					filename: fileToUpload.name,
+					content_type: fileToUpload.type,
 					category: "cover",
 				}),
 			});
@@ -138,9 +167,9 @@ export default function VibeCheckOverlay({
 			const uploadRes = await fetch(upload_url, {
 				method: "PUT",
 				headers: {
-					"Content-Type": originalFile.type,
+					"Content-Type": fileToUpload.type,
 				},
-				body: originalFile,
+				body: fileToUpload,
 			});
 
 			if (!uploadRes.ok) {

@@ -4,6 +4,7 @@ import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { ImagePlus, Upload, Trash2, Loader2 } from "lucide-react";
+import imageCompression from "browser-image-compression";
 import { useImageUpload } from "@/app/hooks/use-image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,9 +58,37 @@ export default function ImageUpload({
 				throw new Error("Please select an image file");
 			}
 
-			// MAX 15MB validation client-side (backend will compress)
-			if (file.size > 15 * 1024 * 1024) {
-				throw new Error("File size must be less than 15MB");
+			// Client-side Compression
+			let fileToUpload = file;
+			try {
+				const options = {
+					maxSizeMB: 1.5, // Target 1.5MB max to save server CPU/Memory
+					maxWidthOrHeight: 2048, // Limit resolution for standard HD use
+					useWebWorker: true,
+					initialQuality: 0.8,
+				};
+
+				// Only compress if larger than 1.5MB or 2048px
+				if (file.size > 1.5 * 1024 * 1024) {
+					console.log("Compressing image client-side...", file.name);
+					const compressedFile = await imageCompression(file, options);
+					fileToUpload = new File([compressedFile], file.name, {
+						type: compressedFile.type,
+						lastModified: Date.now(),
+					});
+					console.log(
+						`Compression complete: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`,
+					);
+				}
+			} catch (compressionError) {
+				console.warn(
+					"Client-side compression failed, uploading original:",
+					compressionError,
+				);
+				// Fallback to original, but respect absolute hard limit of 15MB
+				if (file.size > 15 * 1024 * 1024) {
+					throw new Error("File too large (failed to compress and > 15MB)");
+				}
 			}
 
 			// Get presigned URL from backend
@@ -71,8 +100,8 @@ export default function ImageUpload({
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					filename: file.name,
-					content_type: file.type,
+					filename: fileToUpload.name,
+					content_type: fileToUpload.type,
 					category,
 				}),
 			});
@@ -86,9 +115,9 @@ export default function ImageUpload({
 			const uploadRes = await fetch(upload_url, {
 				method: "PUT",
 				headers: {
-					"Content-Type": file.type,
+					"Content-Type": fileToUpload.type,
 				},
-				body: file,
+				body: fileToUpload,
 			});
 
 			if (!uploadRes.ok) throw new Error("Failed to upload image");
@@ -123,7 +152,8 @@ export default function ImageUpload({
 		assetId: string,
 		token: string | null,
 	): Promise<string> => {
-		const maxAttempts = 20;
+		// Increased timeout to 60s for handling large high-res images
+		const maxAttempts = 60;
 		const interval = 1000; // 1s
 
 		for (let i = 0; i < maxAttempts; i++) {
