@@ -57,9 +57,9 @@ export default function ImageUpload({
 				throw new Error("Please select an image file");
 			}
 
-			// MAX 3MB validation client-side
-			if (file.size > 3 * 1024 * 1024) {
-				throw new Error("File size must be less than 3MB");
+			// MAX 15MB validation client-side (backend will compress)
+			if (file.size > 15 * 1024 * 1024) {
+				throw new Error("File size must be less than 15MB");
 			}
 
 			// Get presigned URL from backend
