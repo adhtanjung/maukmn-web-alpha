@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
 				protocol: "https",
 				hostname: "assets.maukmn.com",
 			},
+			{
+				protocol: "https",
+				hostname: "maukemana-backend-743021038514.asia-southeast2.run.app",
+			},
 		],
 	},
 };
