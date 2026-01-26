@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
@@ -14,6 +14,24 @@ export const metadata: Metadata = {
 	title: "Maukemana - Discovery Feed",
 	description:
 		"Hyper-personalized, community-curated discovery platform for Indonesia",
+	manifest: "/manifest.json",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "black-translucent",
+		title: "Maukemana",
+	},
+	icons: {
+		icon: "/icon-192x192.png",
+		apple: "/apple-touch-icon.png",
+	},
+};
+
+export const viewport: Viewport = {
+	themeColor: "#18181b",
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 1,
+	userScalable: false,
 };
 
 export default function RootLayout({
