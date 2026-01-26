@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
-import imageCompression from "browser-image-compression";
 
 interface VibeCheckOverlayProps {
 	imageSrc: string;
@@ -56,10 +55,55 @@ export default function VibeCheckOverlay({
 		return new File([u8arr], filename, { type: mime });
 	};
 
-	// Helper: Upload image via presign workflow (with compression)
+	const getBestRenditionName = (cat: string) => {
+		switch (cat) {
+			case "profile":
+				return "profile_200";
+			case "cover":
+				return "cover_1200";
+			case "gallery":
+				return "gallery_640";
+			default:
+				return "general_640";
+		}
+	};
+
+	const pollForCompletion = async (
+		assetId: string,
+		token: string | null,
+	): Promise<string> => {
+		const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+		const maxAttempts = 20;
+		const interval = 1000;
+
+		for (let i = 0; i < maxAttempts; i++) {
+			await new Promise((resolve) => setTimeout(resolve, interval));
+
+			const res = await fetch(`${API_URL}/api/v1/assets/${assetId}`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!res.ok) continue;
+
+			const data = await res.json();
+			const asset = data.data;
+
+			if (asset.status === "ready") {
+				const bestRendition = getBestRenditionName("cover");
+				return `${API_URL}/img/${asset.content_hash}/${bestRendition}`;
+			} else if (asset.status === "failed") {
+				throw new Error(asset.error || "Processing failed");
+			}
+		}
+		throw new Error("Processing timed out");
+	};
+
+	// Helper: Upload image via presign workflow
 	const uploadImage = async (
 		dataUrl: string,
-		token: string
+		token: string,
 	): Promise<string | null> => {
 		try {
 			const API_URL =
@@ -67,49 +111,6 @@ export default function VibeCheckOverlay({
 
 			// Convert data URL to File
 			const originalFile = dataURLtoFile(dataUrl, `flag-${Date.now()}.jpg`);
-
-			// Compress the image (matching ImageUpload.tsx logic)
-			const compressionOptions = {
-				maxSizeMB: 0.7,
-				maxWidthOrHeight: 1920,
-				useWebWorker: true,
-				fileType: "image/webp" as const,
-				initialQuality: 0.8,
-			};
-
-			let compressedFile = originalFile;
-			try {
-				compressedFile = await imageCompression(
-					originalFile,
-					compressionOptions
-				);
-
-				// Retry with stronger compression if still too big
-				if (compressedFile.size > 1024 * 1024) {
-					console.warn(
-						`Compression target missed. File size: ${(
-							compressedFile.size /
-							1024 /
-							1024
-						).toFixed(2)}MB. Retrying...`
-					);
-					const retryOptions = {
-						...compressionOptions,
-						maxSizeMB: 0.5,
-						initialQuality: 0.6,
-					};
-					compressedFile = await imageCompression(originalFile, retryOptions);
-				}
-
-				console.log(
-					`Original: ${(originalFile.size / 1024 / 1024).toFixed(
-						2
-					)}MB, Compressed: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`
-				);
-			} catch (compressionError) {
-				console.error("Compression failed, using original:", compressionError);
-				// Fall back to original file if compression fails
-			}
 
 			// Get presigned URL
 			const presignRes = await fetch(`${API_URL}/api/v1/uploads/presign`, {
@@ -119,8 +120,8 @@ export default function VibeCheckOverlay({
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					filename: compressedFile.name.replace(/\.[^/.]+$/, ".webp"),
-					content_type: "image/webp",
+					filename: originalFile.name,
+					content_type: originalFile.type,
 					category: "cover",
 				}),
 			});
@@ -131,15 +132,15 @@ export default function VibeCheckOverlay({
 			}
 
 			const presignData = await presignRes.json();
-			const { upload_url, public_url } = presignData.data;
+			const { upload_url, key } = presignData.data;
 
 			// Upload to R2
 			const uploadRes = await fetch(upload_url, {
 				method: "PUT",
 				headers: {
-					"Content-Type": "image/webp",
+					"Content-Type": originalFile.type,
 				},
-				body: compressedFile,
+				body: originalFile,
 			});
 
 			if (!uploadRes.ok) {
@@ -147,7 +148,29 @@ export default function VibeCheckOverlay({
 				return null;
 			}
 
-			return public_url;
+			// Finalize upload
+			const finalizeRes = await fetch(`${API_URL}/api/v1/uploads/finalize`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					upload_key: key,
+					category: "cover",
+				}),
+			});
+
+			if (!finalizeRes.ok) {
+				console.error("Failed to finalize upload");
+				return null;
+			}
+
+			const finalizeData = await finalizeRes.json();
+			const { asset_id } = finalizeData.data;
+
+			// Poll for completion
+			return await pollForCompletion(asset_id, token);
 		} catch (error) {
 			console.error("Image upload error:", error);
 			return null;
@@ -192,7 +215,7 @@ export default function VibeCheckOverlay({
 						enableHighAccuracy: true,
 						timeout: 10_000,
 						maximumAge: 0,
-					})
+					}),
 			);
 
 			const payload = {
@@ -309,8 +332,8 @@ export default function VibeCheckOverlay({
 									wifiQuality === "excellent"
 										? "bg-emerald-500/20 text-emerald-500"
 										: wifiQuality === "moderate"
-										? "bg-amber-500/20 text-amber-500"
-										: "bg-red-500/20 text-red-500"
+											? "bg-amber-500/20 text-amber-500"
+											: "bg-red-500/20 text-red-500"
 								}`}
 							>
 								{wifiQuality}

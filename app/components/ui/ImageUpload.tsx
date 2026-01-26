@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from "react";
 import Image from "next/image";
-import imageCompression from "browser-image-compression";
 import { useAuth } from "@clerk/nextjs";
 import { ImagePlus, Upload, Trash2, Loader2 } from "lucide-react";
 import { useImageUpload } from "@/app/hooks/use-image-upload";
@@ -58,51 +57,9 @@ export default function ImageUpload({
 				throw new Error("Please select an image file");
 			}
 
-			// Compress the image
-			const options = {
-				maxSizeMB: 0.7, // Reduced from 1MB to 0.7MB to ensure we stay under the limit
-				maxWidthOrHeight: 1920,
-				useWebWorker: true,
-				fileType: "image/webp" as const,
-				initialQuality: 0.8, // Start with reasonable quality
-			};
-
-			let compressedFile = file;
-			try {
-				compressedFile = await imageCompression(file, options);
-
-				// Double check the size
-				if (compressedFile.size > 1024 * 1024) {
-					console.warn(
-						`Compression target missed. File size: ${(
-							compressedFile.size /
-							1024 /
-							1024
-						).toFixed(2)}MB. Retrying with lower quality...`
-					);
-					// Retry with stronger compression if still too big
-					const retryOptions = {
-						...options,
-						maxSizeMB: 0.5,
-						initialQuality: 0.6,
-					};
-					compressedFile = await imageCompression(file, retryOptions);
-				}
-
-				console.log(
-					`Original: ${(file.size / 1024 / 1024).toFixed(2)}MB, Compressed: ${(
-						compressedFile.size /
-						1024 /
-						1024
-					).toFixed(2)}MB`
-				);
-			} catch (err) {
-				console.error("Compression error:", err);
-				// Fallback to original file if compression impacts it too much or fails,
-				// but realistically we should probably fail or warn.
-				// For now, we'll keep the behavior of proceeding, but maybe with the original if it failed?
-				// Actually the original code just caught and logged, leaving compressedFile as original.
-				// We should probably keep that safety fallback.
+			// MAX 3MB validation client-side
+			if (file.size > 3 * 1024 * 1024) {
+				throw new Error("File size must be less than 3MB");
 			}
 
 			// Get presigned URL from backend
@@ -114,32 +71,137 @@ export default function ImageUpload({
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					filename: compressedFile.name,
-					content_type: "image/webp",
+					filename: file.name,
+					content_type: file.type,
 					category,
 				}),
 			});
 
 			if (!presignRes.ok) throw new Error("Failed to get upload URL");
 
-			const response = await presignRes.json();
-			const { upload_url, public_url } = response.data;
+			const presignData = await presignRes.json();
+			const { upload_url, key } = presignData.data;
 
 			// Upload directly to R2
 			const uploadRes = await fetch(upload_url, {
 				method: "PUT",
 				headers: {
-					"Content-Type": "image/webp",
+					"Content-Type": file.type,
 				},
-				body: compressedFile,
+				body: file,
 			});
 
 			if (!uploadRes.ok) throw new Error("Failed to upload image");
 
-			return public_url;
+			// Finalize upload and trigger processing
+			const finalizeRes = await fetch(`${API_URL}/api/v1/uploads/finalize`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					upload_key: key,
+					category,
+				}),
+			});
+
+			if (!finalizeRes.ok) throw new Error("Failed to finalize upload");
+
+			const finalizeData = await finalizeRes.json();
+			const { asset_id } = finalizeData.data;
+
+			// Poll for status
+			return await pollForCompletion(asset_id, token);
 		} catch (error) {
 			console.error("Upload error:", error);
 			throw error;
+		}
+	};
+
+	const pollForCompletion = async (
+		assetId: string,
+		token: string | null,
+	): Promise<string> => {
+		const maxAttempts = 20;
+		const interval = 1000; // 1s
+
+		for (let i = 0; i < maxAttempts; i++) {
+			await new Promise((resolve) => setTimeout(resolve, interval));
+
+			const res = await fetch(`${API_URL}/api/v1/assets/${assetId}`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!res.ok) continue;
+
+			const data = await res.json();
+			const asset = data.data;
+
+			if (asset.status === "ready") {
+				// Return the URL for the "original" or best derivative representation
+				// For simple display, we can reconstruct the URL or use a specific derivative
+				// If derivatives exist, prefer a suitable one, otherwise original logic if available
+				// The API returns derivatives map. Let's pick a default based on category.
+				// Or constructs a CDN URL.
+
+				// For now, construct the optimal CDN URL based on content hash and category
+				// Ideally we'd pick the best format, but for the input value (string),
+				// we likely want a base URL that the ResponsiveImage component handles,
+				// or a specific jpg/webp fallback for simple <img> tags.
+
+				// Let's return the content hash + rendition name pattern
+				// e.g. /img/{hash}/{rendition}
+
+				// However, existing consumers of this component expect a full URL string
+				// that likely works in <Image src={...}>.
+
+				// We'll return a WebP version of the largest non-original rendition as the "value"
+				// which provides good backward compat until we switch to ResponsiveImage.
+
+				const bestRendition = getBestRenditionName(category);
+				return `${process.env.NEXT_PUBLIC_API_URL}/img/${asset.content_hash}/${bestRendition}`;
+				// Note: using API_URL/img is a proxy assumption, or we use the R2 public URL pattern if no CDN proxy yet.
+				// The implementation plan mentions CDN URL.
+				// Let's assume direct R2 public URL for now if CDN isn't set up, OR the storage client's GetPublicURL logic.
+				// Actually, let's use the URL pattern from the first available derivative to be safe.
+
+				if (asset.derivatives) {
+					const renditions = Object.keys(asset.derivatives);
+					if (renditions.length > 0) {
+						// Prefer the intended one
+						const pref = getBestRenditionName(category);
+						if (asset.derivatives[pref]) {
+							// Use the first format available, prefer webp or jpg
+							// The URL pattern from API is like /img/{hash}/{rendition}
+							// We probably want to append a default format extension for simple usages
+							return asset.derivatives[pref].url_pattern + ".webp"; // simplistic
+						}
+						// Fallback
+						const first = renditions[0];
+						return asset.derivatives[first].url_pattern + ".webp";
+					}
+				}
+				return ""; // Should not happen if ready
+			} else if (asset.status === "failed") {
+				throw new Error(asset.error || "Processing failed");
+			}
+		}
+		throw new Error("Processing timed out");
+	};
+
+	const getBestRenditionName = (cat: string) => {
+		switch (cat) {
+			case "profile":
+				return "profile_200";
+			case "cover":
+				return "cover_1200";
+			case "gallery":
+				return "gallery_640"; // reasonable default for preview
+			default:
+				return "general_640";
 		}
 	};
 
@@ -160,7 +222,7 @@ export default function ImageUpload({
 	};
 
 	const handleMultipleUploadProcess = async (
-		items: { url: string; file: File }[]
+		items: { url: string; file: File }[],
 	) => {
 		setUploadState({
 			isUploading: true,
@@ -236,7 +298,7 @@ export default function ImageUpload({
 			setIsDragging(false);
 
 			const files = Array.from(e.dataTransfer.files).filter((file) =>
-				file.type.startsWith("image/")
+				file.type.startsWith("image/"),
 			);
 
 			if (files.length > 0) {
@@ -248,7 +310,7 @@ export default function ImageUpload({
 				handleFileChange(fakeEvent);
 			}
 		},
-		[handleFileChange]
+		[handleFileChange],
 	);
 
 	const handleRemove = useCallback(() => {
@@ -283,7 +345,7 @@ export default function ImageUpload({
 					className={cn(
 						"flex flex-col items-center justify-center gap-4 rounded-sm border-2 border-dashed border-input bg-muted/30 transition-colors hover:bg-muted/50 cursor-pointer",
 						aspectClass,
-						isDragging && "border-primary/50 bg-primary/5"
+						isDragging && "border-primary/50 bg-primary/5",
 					)}
 				>
 					<div className="rounded-full bg-background p-3 shadow-sm ring-1 ring-border">
@@ -308,7 +370,7 @@ export default function ImageUpload({
 						className={cn(
 							"relative overflow-hidden rounded-sm border bg-muted",
 							aspectClass,
-							onImageClick && "cursor-pointer"
+							onImageClick && "cursor-pointer",
 						)}
 						onClick={() => displayUrl && onImageClick?.(displayUrl)}
 					>
