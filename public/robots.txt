@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Sitemap location (update with actual domain when deployed)
+Sitemap: https://maukmn.com/sitemap.xml
+
+# Disallow admin/internal routes
+Disallow: /admin/
+Disallow: /api/
+
+# Allow crawling of static assets
+Allow: /_next/static/

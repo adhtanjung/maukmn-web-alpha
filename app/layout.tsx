@@ -25,10 +25,27 @@ export default function RootLayout({
 		<ClerkProvider>
 			<html lang="en" suppressHydrationWarning>
 				<head>
+					{/*
+						Material Symbols uses variable axes (FILL, wght) not supported by next/font/google.
+						Loading in root layout.tsx ensures it's applied globally.
+					*/}
+					{/* eslint-disable-next-line @next/next/no-page-custom-font */}
+					<link
+						rel="preload"
+						as="style"
+						href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+					/>
+					{/* eslint-disable-next-line @next/next/no-page-custom-font */}
 					<link
 						rel="stylesheet"
 						href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
 					/>
+					<noscript>
+						<link
+							rel="stylesheet"
+							href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+						/>
+					</noscript>
 				</head>
 				<body
 					className={`${plusJakartaSans.variable} font-sans antialiased bg-black text-foreground overflow-hidden h-dvh w-screen flex items-center justify-center`}
