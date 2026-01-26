@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+	Carousel,
+	CarouselContent,
+	CarouselItem,
+	type CarouselApi,
+} from "@/components/ui/carousel";
 import { POI } from "@/app/hooks/usePOIs";
 import { calculateWorkabilityScore } from "@/app/lib/utils/calculateWorkabilityScore";
 import { getOpenStatus } from "@/app/lib/utils/getOpenStatus";
@@ -20,12 +25,9 @@ interface POICardProps {
 	likes?: number;
 	comments?: number;
 	onMoreClick?: () => void;
+	/** Mark as the first visible card to prioritize LCP image loading */
+	isFirstCard?: boolean;
 }
-
-const swipeConfidenceThreshold = 10000;
-const swipePower = (offset: number, velocity: number) => {
-	return Math.abs(offset) * velocity;
-};
 
 export default function POICard({
 	poi,
@@ -33,20 +35,11 @@ export default function POICard({
 	likes = 0,
 	comments = 0,
 	onMoreClick,
+	isFirstCard = false,
 }: POICardProps) {
 	const router = useRouter();
-	const [currentImageIndex, setCurrentImageIndex] = useState(0);
-	const [direction, setDirection] = useState(0);
-	const isDragging = useRef(false);
-
-	// Helper to handle navigation
-	const paginate = (newDirection: number) => {
-		const nextIndex = currentImageIndex + newDirection;
-		if (nextIndex >= 0 && nextIndex < allImages.length) {
-			setDirection(newDirection);
-			setCurrentImageIndex(nextIndex);
-		}
-	};
+	const [api, setApi] = useState<CarouselApi>();
+	const [current, setCurrent] = useState(0);
 
 	// Get all images (cover + gallery)
 	const allImages = [
@@ -54,9 +47,24 @@ export default function POICard({
 		...(poi.gallery_image_urls || []),
 	].filter(Boolean) as string[];
 
-	const currentImage =
-		allImages[currentImageIndex] ||
-		"https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800";
+	useEffect(() => {
+		if (!api) {
+			return;
+		}
+
+		const onSelect = () => {
+			setCurrent(api.selectedScrollSnap());
+		};
+
+		onSelect();
+		api.on("select", onSelect);
+		api.on("reInit", onSelect);
+
+		return () => {
+			api.off("select", onSelect);
+			api.off("reInit", onSelect);
+		};
+	}, [api]);
 
 	// Calculate derived data
 	const workabilityScore = calculateWorkabilityScore(poi);
@@ -64,7 +72,7 @@ export default function POICard({
 	const dynamicBadges = getDynamicBadges(poi);
 	const featuredBadge = getFeaturedBadge(
 		openStatus.isOpen,
-		openStatus.statusText
+		openStatus.statusText,
 	);
 
 	// Combine badges: featured first, then dynamic
@@ -72,21 +80,24 @@ export default function POICard({
 		? [featuredBadge, ...dynamicBadges.slice(0, 2)]
 		: dynamicBadges;
 
-	const handleImageTap = (e: React.MouseEvent<HTMLDivElement>) => {
-		if (isDragging.current) return;
-		if (allImages.length <= 1) return;
+	const handleImageTap = useCallback(
+		(e: React.MouseEvent<HTMLDivElement>) => {
+			if (!api) return;
+			if (allImages.length <= 1) return;
 
-		const rect = e.currentTarget.getBoundingClientRect();
-		const tapX = e.clientX - rect.left;
-		const isLeftTap = tapX < rect.width / 3;
-		const isRightTap = tapX > (rect.width * 2) / 3;
+			const rect = e.currentTarget.getBoundingClientRect();
+			const tapX = e.clientX - rect.left;
+			const isLeftTap = tapX < rect.width / 3;
+			const isRightTap = tapX > (rect.width * 2) / 3;
 
-		if (isLeftTap) {
-			paginate(-1);
-		} else if (isRightTap) {
-			paginate(1);
-		}
-	};
+			if (isLeftTap) {
+				api.scrollPrev();
+			} else if (isRightTap) {
+				api.scrollNext();
+			}
+		},
+		[api, allImages.length],
+	);
 
 	// Navigate to map with directions mode
 	const handleDirections = () => {
@@ -94,7 +105,7 @@ export default function POICard({
 			router.push(
 				`/discovery/map?navigate=${poi.poi_id}&lat=${poi.latitude}&lng=${
 					poi.longitude
-				}&name=${encodeURIComponent(poi.name)}`
+				}&name=${encodeURIComponent(poi.name)}`,
 			);
 		}
 	};
@@ -104,82 +115,41 @@ export default function POICard({
 	return (
 		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden bg-card">
 			{/* Hero Image with Tap Zones for Gallery */}
-			<div
-				className="absolute inset-0 w-full h-full cursor-pointer group bg-muted"
-				onClick={handleImageTap}
-				role="button"
-				tabIndex={0}
-				onKeyDown={(e) => {
-					if (e.key === "ArrowLeft") {
-						setDirection(-1);
-						setCurrentImageIndex(Math.max(0, currentImageIndex - 1));
-					}
-					if (e.key === "ArrowRight") {
-						setDirection(1);
-						setCurrentImageIndex(
-							Math.min(allImages.length - 1, currentImageIndex + 1)
-						);
-					}
-				}}
-			>
-				<AnimatePresence initial={false} custom={direction}>
-					<motion.div
-						key={currentImage}
-						custom={direction}
-						variants={{
-							enter: (direction: number) => ({
-								x: direction > 0 ? "100%" : "-100%",
-								opacity: 0,
-							}),
-							center: {
-								zIndex: 1,
-								x: 0,
-								opacity: 1,
-							},
-							exit: (direction: number) => ({
-								zIndex: 0,
-								x: direction < 0 ? "100%" : "-100%",
-								opacity: 0,
-							}),
-						}}
-						initial="enter"
-						animate="center"
-						exit="exit"
-						transition={{
-							x: { type: "spring", stiffness: 300, damping: 30 },
-							opacity: { duration: 0.2 },
-						}}
-						className="absolute inset-0 w-full h-full touch-pan-y"
-						drag="x"
-						dragConstraints={{ left: 0, right: 0 }}
-						dragElastic={1}
-						onDragStart={() => {
-							isDragging.current = true;
-						}}
-						onDragEnd={(e, { offset, velocity }) => {
-							const swipe = swipePower(offset.x, velocity.x);
-
-							if (swipe < -swipeConfidenceThreshold) {
-								paginate(1);
-							} else if (swipe > swipeConfidenceThreshold) {
-								paginate(-1);
-							}
-
-							setTimeout(() => {
-								isDragging.current = false;
-							}, 50);
-						}}
-					>
-						<Image
-							src={currentImage}
-							alt={poi.name}
-							fill
-							className="object-cover"
-							sizes="(max-width: 768px) 100vw, 430px"
-							priority={distance === "Nearby"}
-						/>
-					</motion.div>
-				</AnimatePresence>
+			{/* Hero Image with Tap Zones for Gallery */}
+			<div className="absolute inset-0 w-full h-full bg-muted">
+				<Carousel setApi={setApi} className="w-full h-full">
+					<CarouselContent className="h-full ml-0">
+						{allImages.length > 0 ? (
+							allImages.map((src, index) => (
+								<CarouselItem
+									key={index}
+									className="relative w-full h-full pl-0 cursor-pointer"
+									onClick={handleImageTap}
+								>
+									<Image
+										src={src}
+										alt={poi.name}
+										fill
+										className="object-cover"
+										sizes="(max-width: 768px) 100vw, 430px"
+										priority={isFirstCard && index === 0}
+									/>
+								</CarouselItem>
+							))
+						) : (
+							<CarouselItem className="relative w-full h-full pl-0">
+								<Image
+									src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800"
+									alt={poi.name}
+									fill
+									className="object-cover"
+									sizes="(max-width: 768px) 100vw, 430px"
+									priority={isFirstCard}
+								/>
+							</CarouselItem>
+						)}
+					</CarouselContent>
+				</Carousel>
 			</div>
 
 			{/* Gallery Indicators */}
@@ -189,7 +159,7 @@ export default function POICard({
 						<div
 							key={idx}
 							className={`h-1 rounded-full transition-all ${
-								idx === currentImageIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
+								idx === current ? "w-6 bg-white" : "w-1.5 bg-white/40"
 							}`}
 						/>
 					))}

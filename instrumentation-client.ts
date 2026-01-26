@@ -4,6 +4,8 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+const isDev = process.env.NODE_ENV === "development";
+
 Sentry.init({
 	dsn: "https://d76898708bc8f72ab54dc8bda03fbb66@o4510691744088064.ingest.us.sentry.io/4510691744284672",
 
@@ -11,26 +13,23 @@ Sentry.init({
 	// debug: true,
 
 	// Add optional integrations for additional features
+	// Disable Session Replay in development (CPU-heavy)
 	integrations: [
-		Sentry.replayIntegration(),
-		// Capture console.log, console.error, etc. and send to Sentry Logs
+		...(isDev ? [] : [Sentry.replayIntegration()]),
 		Sentry.consoleLoggingIntegration({
 			levels: ["log", "info", "warn", "error", "debug"],
 		}),
 	],
 
-	// Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-	tracesSampleRate: 1,
+	// Reduce tracing overhead in development
+	tracesSampleRate: isDev ? 0.1 : 1,
+
 	// Enable logs to be sent to Sentry
 	enableLogs: true,
 
-	// Define how likely Replay events are sampled.
-	// This sets the sample rate to be 10%. You may want this to be 100% while
-	// in development and sample at a lower rate in production
-	replaysSessionSampleRate: 0.1,
-
-	// Define how likely Replay events are sampled when an error occurs.
-	replaysOnErrorSampleRate: 1.0,
+	// Disable replay sampling in development
+	replaysSessionSampleRate: isDev ? 0 : 0.1,
+	replaysOnErrorSampleRate: isDev ? 0 : 1.0,
 
 	// Enable sending user PII (Personally Identifiable Information)
 	// https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii

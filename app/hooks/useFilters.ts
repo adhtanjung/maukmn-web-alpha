@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { POI } from "./usePOIs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -44,7 +44,7 @@ interface UseFiltersResult {
 	filters: FilterState;
 	setFilter: <K extends keyof FilterState>(
 		key: K,
-		value: FilterState[K]
+		value: FilterState[K],
 	) => void;
 	setFilters: (filters: FilterState) => void;
 	toggleArrayFilter: (
@@ -54,7 +54,7 @@ interface UseFiltersResult {
 			| "dietaryOptions"
 			| "seatingOptions"
 			| "parkingOptions",
-		value: string
+		value: string,
 	) => void;
 	resetFilters: () => void;
 	applyQuickFilter: (presetId: string) => void;
@@ -63,7 +63,7 @@ interface UseFiltersResult {
 	hasActiveFilters: boolean;
 	updateFilter: <K extends keyof FilterState>(
 		key: K,
-		value: FilterState[K]
+		value: FilterState[K],
 	) => void;
 	queryString: string;
 }
@@ -85,7 +85,7 @@ const QUICK_FILTER_PRESETS: Record<string, Partial<FilterState>> = {
 };
 
 export function useFilters(
-	initialFilters?: Partial<FilterState>
+	initialFilters?: Partial<FilterState>,
 ): UseFiltersResult {
 	const [filters, setFiltersState] = useState<FilterState>({
 		...DEFAULT_FILTERS,
@@ -97,7 +97,7 @@ export function useFilters(
 		<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
 			setFiltersState((prev) => ({ ...prev, [key]: value }));
 		},
-		[]
+		[],
 	);
 
 	// Alias for updateFilter to match return type expectation if needed, or direct exposure
@@ -116,7 +116,7 @@ export function useFilters(
 				| "dietaryOptions"
 				| "seatingOptions"
 				| "parkingOptions",
-			value: string
+			value: string,
 		) => {
 			setFiltersState((prev) => {
 				const current = prev[key];
@@ -126,7 +126,7 @@ export function useFilters(
 				return { ...prev, [key]: [...current, value] };
 			});
 		},
-		[]
+		[],
 	);
 
 	// Reset all filters to default
@@ -247,13 +247,20 @@ export function useFilters(
 }
 
 // Hook to fetch POIs with filters
-export function useFilteredPOIs(queryString: string, enabled: boolean = true) {
-	const [pois, setPois] = useState<POI[]>([]);
-	const [loading, setLoading] = useState(false);
+export function useFilteredPOIs(
+	queryString: string,
+	enabled: boolean = true,
+	initialData?: POI[],
+	initialTotal?: number,
+) {
+	const [pois, setPois] = useState<POI[]>(initialData ?? []);
+	const [loading, setLoading] = useState(initialData ? false : true);
 	const [error, setError] = useState<string | null>(null);
-	const [total, setTotal] = useState(0);
+	const [total, setTotal] = useState(initialTotal ?? 0);
 	const [page, setPage] = useState(1);
-	const [hasMore, setHasMore] = useState(true);
+	const [hasMore, setHasMore] = useState(
+		initialData ? initialData.length < (initialTotal ?? 0) : true,
+	);
 
 	const fetchFilteredPOIs = useCallback(
 		async (pageNum: number = 1, append: boolean = false) => {
@@ -304,7 +311,7 @@ export function useFilteredPOIs(queryString: string, enabled: boolean = true) {
 					if (append) {
 						const existingIds = new Set(prev.map((p) => p.poi_id));
 						const uniqueResults = results.filter(
-							(p) => !existingIds.has(p.poi_id)
+							(p) => !existingIds.has(p.poi_id),
 						);
 						updated = [...prev, ...uniqueResults];
 					} else {
@@ -340,7 +347,7 @@ export function useFilteredPOIs(queryString: string, enabled: boolean = true) {
 				setLoading(false);
 			}
 		},
-		[queryString, enabled]
+		[queryString, enabled],
 	);
 
 	// Function to fetch recommendations when results are low
@@ -398,8 +405,17 @@ export function useFilteredPOIs(queryString: string, enabled: boolean = true) {
 		}
 	}, []);
 
-	// Automatically fetch when query string changes
+	// Track initial query string to detect filter changes
+	const initialQueryRef = useRef(queryString);
+	const hasInitialData = initialData && initialData.length > 0;
+
+	// Automatically fetch when query string changes (skip initial if we have SSR data)
 	useEffect(() => {
+		// Skip if this is the first render and we have initial data
+		if (hasInitialData && queryString === initialQueryRef.current) {
+			return;
+		}
+
 		setPage(1);
 		setHasMore(true);
 
@@ -409,7 +425,7 @@ export function useFilteredPOIs(queryString: string, enabled: boolean = true) {
 				fetchRecommendations();
 			}
 		});
-	}, [fetchFilteredPOIs, queryString, fetchRecommendations]);
+	}, [fetchFilteredPOIs, queryString, fetchRecommendations, hasInitialData]);
 
 	const loadMore = useCallback(() => {
 		if (!loading && hasMore) {
