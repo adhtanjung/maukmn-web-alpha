@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { SmartImage } from "@/components/ui/smart-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -115,8 +115,7 @@ export default function POICard({
 	return (
 		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden bg-card">
 			{/* Hero Image with Tap Zones for Gallery */}
-			{/* Hero Image with Tap Zones for Gallery */}
-			<div className="absolute inset-0 w-full h-full bg-muted">
+			<div className="absolute inset-0 w-full h-full">
 				<Carousel setApi={setApi} className="w-full h-full">
 					<CarouselContent className="h-full ml-0">
 						{allImages.length > 0 ? (
@@ -126,11 +125,12 @@ export default function POICard({
 									className="relative w-full h-full pl-0 cursor-pointer"
 									onClick={handleImageTap}
 								>
-									<Image
+									<SmartImage
 										src={src}
 										alt={poi.name}
 										fill
 										className="object-cover"
+										containerClassName="h-full w-full"
 										sizes="(max-width: 768px) 100vw, 430px"
 										priority={isFirstCard && index === 0}
 									/>
@@ -138,11 +138,12 @@ export default function POICard({
 							))
 						) : (
 							<CarouselItem className="relative w-full h-full pl-0">
-								<Image
+								<SmartImage
 									src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800"
 									alt={poi.name}
 									fill
 									className="object-cover"
+									containerClassName="h-full w-full"
 									sizes="(max-width: 768px) 100vw, 430px"
 									priority={isFirstCard}
 								/>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { SmartImage } from "@/components/ui/smart-image";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -160,11 +160,12 @@ export default function POIDetailContent({
 							className="relative w-full max-w-4xl max-h-[90vh] aspect-4/3"
 							onClick={(e) => e.stopPropagation()}
 						>
-							<Image
+							<SmartImage
 								src={selectedImage}
 								alt="Full screen view"
 								fill
 								className="object-contain"
+								containerClassName="w-full h-full"
 							/>
 							<button
 								onClick={() => setSelectedImage(null)}
@@ -186,13 +187,14 @@ export default function POIDetailContent({
 						poi.cover_image_url && setSelectedImage(poi.cover_image_url)
 					}
 				>
-					<div className="absolute inset-0 bg-zinc-900">
+					<div className="absolute inset-0">
 						{poi.cover_image_url ? (
-							<Image
+							<SmartImage
 								src={poi.cover_image_url}
 								alt={poi.name}
 								fill
 								className="object-cover opacity-90 transition-transform duration-700 group-hover/hero:scale-105"
+								containerClassName="w-full h-full"
 								priority
 							/>
 						) : (
@@ -607,11 +609,12 @@ export default function POIDetailContent({
 										className="flex-none w-40 h-40 rounded-xl overflow-hidden snap-center ring-1 ring-white/10 relative cursor-pointer active:scale-95 transition-transform"
 										onClick={() => setSelectedImage(src)}
 									>
-										<Image
+										<SmartImage
 											src={src}
 											alt={`Gallery ${idx + 1}`}
 											fill
 											className="object-cover"
+											containerClassName="w-full h-full"
 										/>
 									</div>
 								))
