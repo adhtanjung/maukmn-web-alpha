@@ -9,6 +9,7 @@ import { POIFormProvider } from "@/app/contexts/POIFormContext";
 import CreatePOIOverlay from "@/app/components/poi-creation/CreatePOIOverlay";
 import { mapApiToFormData } from "@/app/lib/utils/poi-mapper";
 import { POIFormData } from "@/app/lib/schemas/poi-form";
+import EditPOILoading from "./loading";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -63,14 +64,7 @@ export default function EditPOIPage() {
 	}, [fetchPOI]);
 
 	if (loading) {
-		return (
-			<main className="h-full w-full bg-background flex items-center justify-center">
-				<div className="animate-pulse flex flex-col items-center gap-4">
-					<div className="w-12 h-12 rounded-full bg-muted" />
-					<div className="h-4 w-32 bg-muted rounded" />
-				</div>
-			</main>
-		);
+		return <EditPOILoading />;
 	}
 
 	if (error) {
@@ -90,7 +84,7 @@ export default function EditPOIPage() {
 		);
 	}
 
-	if (!initialData) return null;
+	if (!initialData) return <EditPOILoading />;
 
 	return (
 		<main className="h-full w-full bg-background relative">

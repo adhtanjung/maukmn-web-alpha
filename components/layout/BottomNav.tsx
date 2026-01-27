@@ -3,9 +3,11 @@
 import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BottomNav() {
 	const router = useRouter();
+	const { isLoaded } = useUser();
 
 	// "Tropical Modernist" Floating Action Button
 	// Using Primary (Emerald) for the main action
@@ -73,22 +75,28 @@ export default function BottomNav() {
 
 				{/* Profile / Auth Button */}
 				<div className="flex flex-col items-center justify-center w-12 h-12">
-					<SignedOut>
-						<SignInButton mode="modal">
-							<Button
-								variant="ghost"
-								className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
-								title="Sign In"
-							>
-								<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
-									login
-								</span>
-							</Button>
-						</SignInButton>
-					</SignedOut>
-					<SignedIn>
-						<ProfileButton />
-					</SignedIn>
+					{!isLoaded ? (
+						<Skeleton className="w-10 h-10 rounded-full bg-muted" />
+					) : (
+						<>
+							<SignedOut>
+								<SignInButton mode="modal">
+									<Button
+										variant="ghost"
+										className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
+										title="Sign In"
+									>
+										<span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
+											login
+										</span>
+									</Button>
+								</SignInButton>
+							</SignedOut>
+							<SignedIn>
+								<ProfileButton />
+							</SignedIn>
+						</>
+					)}
 				</div>
 			</div>
 		</div>

@@ -12,6 +12,7 @@ import POICard from "./POICard";
 import FeedSeparator from "./FeedSeparator";
 import EndOfFeedCard from "./EndOfFeedCard";
 import BottomNav from "@/components/layout/BottomNav";
+import { useRouter } from "next/navigation";
 
 // Loading skeleton component
 function POICardSkeleton() {
@@ -52,6 +53,8 @@ interface FeedProps {
 }
 
 export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
+	const router = useRouter();
+
 	// Use filter hook
 	const { filters, updateFilter, resetFilters, queryString } = useFilters({
 		sortBy: "recommended",
@@ -92,8 +95,8 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 	);
 
 	const handleMoreClick = (poiId: string) => {
-		// TODO: Open POI detail sheet
-		console.log("Open details for:", poiId);
+		// Navigation handled by Intercepting Routes
+		router.push(`/poi/${poiId}`, { scroll: false });
 	};
 
 	// Keyboard navigation support

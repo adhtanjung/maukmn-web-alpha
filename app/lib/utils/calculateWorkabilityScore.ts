@@ -7,6 +7,8 @@ import { POI } from "@/app/hooks/usePOIs";
  * - Noise level (quieter = better for work)
  */
 export function calculateWorkabilityScore(poi: POI): number | null {
+	if (!poi) return null;
+
 	const wifiScores: Record<string, number> = {
 		none: 0,
 		slow: 1,
@@ -37,7 +39,7 @@ export function calculateWorkabilityScore(poi: POI): number | null {
 
 	// Need at least 2 data points to show a meaningful score
 	const dataPoints = [hasWifiData, hasOutletData, hasNoiseData].filter(
-		Boolean
+		Boolean,
 	).length;
 	if (dataPoints < 2) return null;
 

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import useSWR from "swr";
 import { useAuth } from "@clerk/nextjs";
 import StickyHeader from "@/app/components/discovery/StickyHeader";
@@ -45,7 +46,7 @@ export default function POIApprovalsPage() {
 
 	const apiStatus = filter === "reviewed" ? "approved" : filter;
 
-	const { data, mutate } = useSWR(
+	const { data, mutate, isLoading } = useSWR(
 		[
 			`${
 				process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
@@ -55,7 +56,7 @@ export default function POIApprovalsPage() {
 		async ([url, tokenFetcher]) => {
 			const token = await tokenFetcher();
 			return fetcher(url, token);
-		}
+		},
 	);
 
 	const pois: POI[] = data?.data || [];
@@ -91,7 +92,7 @@ export default function POIApprovalsPage() {
 							? JSON.stringify({ reason: "Bulk rejection" })
 							: undefined,
 				});
-			})
+			}),
 		);
 
 		setSelectedIds(new Set());
@@ -161,82 +162,103 @@ export default function POIApprovalsPage() {
 
 					{/* List Items */}
 					<div className="flex flex-col">
-						{pois.length === 0 && (
-							<div className="text-center py-10 text-muted-foreground">
-								<p>No POIs found in this category.</p>
-							</div>
-						)}
-						{pois.map((poi) => (
-							<label
-								key={poi.poi_id}
-								className="flex items-center gap-3 p-3 bg-card rounded-none border-b border-border group hover:bg-muted/50 transition-colors cursor-pointer"
-								htmlFor={`poi-${poi.poi_id}`}
-							>
-								<input
-									className="form-checkbox h-5 w-5 rounded-md text-primary bg-background border-input focus:ring-primary focus:ring-offset-background"
-									id={`poi-${poi.poi_id}`}
-									type="checkbox"
-									checked={selectedIds.has(poi.poi_id)}
-									onChange={() => toggleSelection(poi.poi_id)}
-								/>
-								<div className="flex-1 flex items-center gap-3 min-w-0">
-									<div className="w-14 h-14 rounded-lg bg-muted shrink-0 overflow-hidden relative">
-										{poi.cover_image_url ? (
-											<Image
-												alt={poi.name}
-												className="w-full h-full object-cover"
-												src={poi.cover_image_url}
-												width={56}
-												height={56}
-												unoptimized
-											/>
-										) : (
-											<div className="w-full h-full flex items-center justify-center bg-muted/50">
-												<span className="material-symbols-outlined text-xs">
-													image
-												</span>
+						{isLoading ? (
+							Array.from({ length: 5 }).map((_, i) => (
+								<div
+									key={i}
+									className="flex items-center gap-3 p-3 border-b border-border"
+								>
+									<Skeleton className="h-5 w-5 rounded" />
+									<div className="flex-1 flex items-center gap-3">
+										<Skeleton className="w-14 h-14 rounded-lg shrink-0" />
+										<div className="flex-1 space-y-2">
+											<div className="flex items-center gap-2">
+												<Skeleton className="h-4 w-1/3" />
+												<Skeleton className="h-3 w-8" />
 											</div>
-										)}
-									</div>
-									<div className="flex-1 min-w-0">
-										<div className="flex items-center gap-2 mb-0.5">
-											<h3 className="text-sm font-bold text-foreground truncate">
-												{poi.name}
-											</h3>
-											{/* Placeholder for category badge until we join data properly */}
-											<span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide border border-primary/20 shrink-0">
-												POI
-											</span>
-										</div>
-										<p className="text-xs text-muted-foreground truncate mb-1">
-											{poi.description || "No description provided."}
-										</p>
-										<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-											<span className="material-symbols-outlined text-[13px] leading-none">
-												location_on
-											</span>
-											<span className="truncate">
-												{poi.location_text || "Coordinates available"}
-											</span>
+											<Skeleton className="h-3 w-2/3" />
+											<Skeleton className="h-3 w-1/4" />
 										</div>
 									</div>
 								</div>
-								{/* Edit Button */}
-								<button
-									onClick={(e) => {
-										e.preventDefault();
-										e.stopPropagation();
-										router.push(`/edit-poi/${poi.poi_id}`);
-									}}
-									className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0"
-									title="Edit POI"
+							))
+						) : pois.length === 0 ? (
+							<div className="text-center py-10 text-muted-foreground">
+								<p>No POIs found in this category.</p>
+							</div>
+						) : (
+							pois.map((poi) => (
+								<label
+									key={poi.poi_id}
+									className="flex items-center gap-3 p-3 bg-card rounded-none border-b border-border group hover:bg-muted/50 transition-colors cursor-pointer"
+									htmlFor={`poi-${poi.poi_id}`}
 								>
-									<span className="material-symbols-outlined text-lg text-muted-foreground">
-										edit
-									</span>
-								</button>
-							</label>
-						))}
+									<input
+										className="form-checkbox h-5 w-5 rounded-md text-primary bg-background border-input focus:ring-primary focus:ring-offset-background"
+										id={`poi-${poi.poi_id}`}
+										type="checkbox"
+										checked={selectedIds.has(poi.poi_id)}
+										onChange={() => toggleSelection(poi.poi_id)}
+									/>
+									<div className="flex-1 flex items-center gap-3 min-w-0">
+										<div className="w-14 h-14 rounded-lg bg-muted shrink-0 overflow-hidden relative">
+											{poi.cover_image_url ? (
+												<Image
+													alt={poi.name}
+													className="w-full h-full object-cover"
+													src={poi.cover_image_url}
+													width={56}
+													height={56}
+													unoptimized
+												/>
+											) : (
+												<div className="w-full h-full flex items-center justify-center bg-muted/50">
+													<span className="material-symbols-outlined text-xs">
+														image
+													</span>
+												</div>
+											)}
+										</div>
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center gap-2 mb-0.5">
+												<h3 className="text-sm font-bold text-foreground truncate">
+													{poi.name}
+												</h3>
+												{/* Placeholder for category badge until we join data properly */}
+												<span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide border border-primary/20 shrink-0">
+													POI
+												</span>
+											</div>
+											<p className="text-xs text-muted-foreground truncate mb-1">
+												{poi.description || "No description provided."}
+											</p>
+											<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+												<span className="material-symbols-outlined text-[13px] leading-none">
+													location_on
+												</span>
+												<span className="truncate">
+													{poi.location_text || "Coordinates available"}
+												</span>
+											</div>
+										</div>
+									</div>
+									{/* Edit Button */}
+									<button
+										onClick={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											router.push(`/edit-poi/${poi.poi_id}`);
+										}}
+										className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0"
+										title="Edit POI"
+									>
+										<span className="material-symbols-outlined text-lg text-muted-foreground">
+											edit
+										</span>
+									</button>
+								</label>
+							))
+						)}
 					</div>
 
 					<div className="mt-8 mb-4 text-center">

@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 import { ThemeProvider } from "@/app/components/theme-provider";
+import NextTopLoader from "nextjs-toploader";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
 	variable: "--font-plus-jakarta-sans",
@@ -36,8 +37,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
 	children,
+	modal,
 }: Readonly<{
 	children: React.ReactNode;
+	modal: React.ReactNode;
 }>) {
 	return (
 		<ClerkProvider>
@@ -75,8 +78,10 @@ export default function RootLayout({
 						enableSystem={false}
 						disableTransitionOnChange
 					>
+						<NextTopLoader color="#ff4500" showSpinner={false} height={3} />
 						<div className="relative w-full h-full max-w-[430px] bg-background overflow-hidden shadow-2xl">
 							{children}
+							{modal}
 						</div>
 					</ThemeProvider>
 				</body>

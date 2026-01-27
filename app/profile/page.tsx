@@ -13,8 +13,10 @@ import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 
 import Image from "next/image";
+import ProfileLoading from "./loading";
 
 // Status badge color mapping
+// ... (trimmed for clarity in instruction, but I will replace the target block)
 const statusColors: Record<string, string> = {
 	draft: "bg-slate-500/10 text-slate-500 border-slate-500/20",
 	pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -131,7 +133,7 @@ export default function ProfilePage() {
 
 	const { theme, setTheme } = useTheme();
 
-	if (!isLoaded) return null;
+	if (!isLoaded) return <ProfileLoading />;
 
 	return (
 		<main className="h-full w-full bg-background font-sans antialiased text-foreground min-h-screen flex flex-col overflow-hidden relative">

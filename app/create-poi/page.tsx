@@ -6,9 +6,11 @@ import { Suspense } from "react";
 import CreatePOIOverlay from "../components/poi-creation/CreatePOIOverlay";
 import { POIFormProvider } from "../contexts/POIFormContext";
 
+import CreatePOILoading from "./loading";
+
 export default function CreatePOIPage() {
 	return (
-		<Suspense fallback={null}>
+		<Suspense fallback={<CreatePOILoading />}>
 			<CreatePOIPageContent />
 		</Suspense>
 	);
