@@ -40,6 +40,11 @@ export interface POI {
 	reservation_platform?: string;
 	is_wheelchair_accessible?: boolean;
 	parking_options?: string[];
+	// Metrics (Optional for now)
+	rating?: number;
+	reviews_count?: number;
+	distance?: number;
+	founding_user_username?: string;
 }
 
 interface UsePOIsResult {
@@ -67,7 +72,7 @@ export function usePOIs(status: string = "approved"): UsePOIsResult {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 
 			const data = await response.json();

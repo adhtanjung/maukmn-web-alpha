@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SmartImage } from "@/components/ui/smart-image";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,9 @@ import {
 	getDynamicBadges,
 	getFeaturedBadge,
 } from "@/app/lib/utils/getDynamicBadges";
+import HeartAnimation from "./HeartAnimation";
+import { useSavedPOIs, useSaveToggle } from "@/app/hooks/useSavedPOIs";
+import { CommentDrawer } from "@/app/components/comments/CommentDrawer";
 
 interface POICardProps {
 	poi: POI;
@@ -40,6 +43,13 @@ export default function POICard({
 	const router = useRouter();
 	const [api, setApi] = useState<CarouselApi>();
 	const [current, setCurrent] = useState(0);
+	const [showHeart, setShowHeart] = useState(false);
+	const lastTap = useRef<number>(0);
+
+	// Integrate Save Hooks
+	const { isSaved } = useSavedPOIs();
+	const { toggleSave } = useSaveToggle();
+	const isPoiSaved = isSaved(poi.poi_id);
 
 	// Get all images (cover + gallery)
 	const allImages = [
@@ -80,24 +90,65 @@ export default function POICard({
 		? [featuredBadge, ...dynamicBadges.slice(0, 2)]
 		: dynamicBadges;
 
+	// Handle double tap for like
 	const handleImageTap = useCallback(
 		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!api) return;
-			if (allImages.length <= 1) return;
+			const now = Date.now();
+			const DOUBLE_TAP_DELAY = 300;
 
-			const rect = e.currentTarget.getBoundingClientRect();
-			const tapX = e.clientX - rect.left;
-			const isLeftTap = tapX < rect.width / 3;
-			const isRightTap = tapX > (rect.width * 2) / 3;
+			if (now - lastTap.current < DOUBLE_TAP_DELAY) {
+				// Double tap detected
+				setShowHeart(true);
+				if (!isPoiSaved) {
+					toggleSave(poi.poi_id);
+				}
+				if (navigator.vibrate) navigator.vibrate(50);
+				setTimeout(() => setShowHeart(false), 1000);
+			} else {
+				// Single tap navigation (only if not double tap)
+				// We wait a bit to see if it becomes a double tap?
+				// For carousel navigation, immediate response is better.
+				// We can process carousel nav immediately and just overlay heart if double tap happens.
 
-			if (isLeftTap) {
-				api.scrollPrev();
-			} else if (isRightTap) {
-				api.scrollNext();
+				if (!api) return;
+				if (allImages.length <= 1) return;
+
+				const rect = e.currentTarget.getBoundingClientRect();
+				const tapX = e.clientX - rect.left;
+				const isLeftTap = tapX < rect.width / 3;
+				const isRightTap = tapX > (rect.width * 2) / 3;
+
+				if (isLeftTap) {
+					api.scrollPrev();
+				} else if (isRightTap) {
+					api.scrollNext();
+				}
 			}
+			lastTap.current = now;
 		},
-		[api, allImages.length],
+		[api, allImages.length, isPoiSaved, toggleSave, poi.poi_id],
 	);
+
+	// Share functionality
+	const handleShare = async () => {
+		const shareData = {
+			title: poi.name,
+			text: poi.description || `Check out ${poi.name} on Maukemana`,
+			url: `${window.location.origin}/poi/${poi.poi_id}`,
+		};
+
+		try {
+			if (navigator.share) {
+				await navigator.share(shareData);
+			} else {
+				await navigator.clipboard.writeText(shareData.url);
+				alert("Link copied to clipboard!");
+			}
+		} catch (err) {
+			// User cancelled or error
+			console.debug("Share cancelled", err);
+		}
+	};
 
 	// Navigate to map with directions mode
 	const handleDirections = () => {
@@ -153,6 +204,8 @@ export default function POICard({
 				</Carousel>
 			</div>
 
+			<HeartAnimation isVisible={showHeart} />
+
 			{/* Gallery Indicators */}
 			{allImages.length > 1 && (
 				<div className="absolute top-44 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
@@ -176,28 +229,46 @@ export default function POICard({
 					<Button
 						variant="ghost"
 						size="icon"
-						aria-label="Toggle favorite"
 						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10 group"
+						onClick={(e) => {
+							e.stopPropagation();
+							toggleSave(poi.poi_id);
+						}}
 					>
-						<span className="material-symbols-outlined text-white text-3xl group-hover:text-destructive transition-colors">
+						<span
+							className={`material-symbols-outlined text-3xl transition-colors ${
+								isPoiSaved
+									? "text-red-500 fill-current"
+									: "text-white group-hover:text-red-400"
+							}`}
+							style={
+								isPoiSaved ? { fontVariationSettings: "'FILL' 1" } : undefined
+							}
+						>
 							favorite
 						</span>
 					</Button>
 					<span className="text-xs font-semibold text-white/90 drop-shadow-md">
-						{likes}
+						{likes + (isPoiSaved ? 1 : 0)}
 					</span>
 				</div>
 				<div className="flex flex-col items-center gap-1">
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label="View comments"
-						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
-					>
-						<span className="material-symbols-outlined text-white text-3xl">
-							chat_bubble
-						</span>
-					</Button>
+					<CommentDrawer
+						poiId={poi.poi_id}
+						trigger={
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label="View comments"
+								className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<span className="material-symbols-outlined text-white text-3xl">
+									chat_bubble
+								</span>
+							</Button>
+						}
+					/>
 					<span className="text-xs font-semibold text-white/90 drop-shadow-md">
 						{comments}
 					</span>
@@ -221,6 +292,7 @@ export default function POICard({
 						size="icon"
 						aria-label="Share"
 						className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 active:scale-90 transition-all shadow-lg hover:bg-white/10"
+						onClick={handleShare}
 					>
 						<span className="material-symbols-outlined text-white text-3xl">
 							share
@@ -284,6 +356,23 @@ export default function POICard({
 				{/* Description */}
 				<p className="text-white/80 text-[13px] leading-relaxed line-clamp-2 max-w-[95%] font-medium drop-shadow-md">
 					{poi.description || "Discover this amazing place."}
+				</p>
+
+				{poi.founding_user_username && (
+					<div className="flex items-center gap-1.5 text-white/70 text-xs font-medium drop-shadow-md mt-0.5">
+						<span className="material-symbols-outlined text-[16px] text-sky-400">
+							verified
+						</span>
+						<span>
+							Scouted by{" "}
+							<span className="text-white hover:underline cursor-pointer">
+								@{poi.founding_user_username}
+							</span>
+						</span>
+					</div>
+				)}
+
+				<div className="flex items-center">
 					<Button
 						variant="link"
 						size="sm"
@@ -295,7 +384,7 @@ export default function POICard({
 					>
 						more
 					</Button>
-				</p>
+				</div>
 
 				{/* Dynamic Amenity Chips */}
 				<div className="flex gap-2.5 overflow-x-auto no-scrollbar pt-1 mask-linear-fade">

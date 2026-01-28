@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import {
 	useFilteredPOIs,
 	useFilters,
@@ -13,6 +13,7 @@ import FeedSeparator from "./FeedSeparator";
 import EndOfFeedCard from "./EndOfFeedCard";
 import BottomNav from "@/components/layout/BottomNav";
 import { useRouter } from "next/navigation";
+import { PullToRefresh } from "@/app/components/ui/pull-to-refresh";
 
 // Loading skeleton component
 function POICardSkeleton() {
@@ -54,6 +55,7 @@ interface FeedProps {
 
 export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 	const router = useRouter();
+	const [activeIndex, setActiveIndex] = useState(0);
 
 	// Use filter hook
 	const { filters, updateFilter, resetFilters, queryString } = useFilters({
@@ -72,12 +74,8 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 	});
 
 	// Use filtered POIs hook with initial data
-	const { pois, loading, error, total, loadMore, hasMore } = useFilteredPOIs(
-		queryString,
-		true,
-		initialPOIs,
-		initialTotal,
-	);
+	const { pois, loading, error, total, loadMore, hasMore, refetch } =
+		useFilteredPOIs(queryString, true, initialPOIs, initialTotal);
 
 	const observer = useRef<IntersectionObserver | null>(null);
 	const lastPoiElementRef = useCallback(
@@ -98,6 +96,42 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		// Navigation handled by Intercepting Routes
 		router.push(`/poi/${poiId}`, { scroll: false });
 	};
+
+	// Track active index for preloading
+	useEffect(() => {
+		const options = {
+			root: null,
+			rootMargin: "0px",
+			threshold: 0.6,
+		};
+
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach((entry) => {
+				if (entry.isIntersecting) {
+					const index = Number(entry.target.getAttribute("data-index"));
+					if (!isNaN(index)) {
+						setActiveIndex(index);
+					}
+				}
+			});
+		}, options);
+
+		const cards = document.querySelectorAll(".poi-card-container");
+		cards.forEach((card) => observer.observe(card));
+
+		return () => observer.disconnect();
+	}, [pois.length]); // Re-run when pois change
+
+	// Preload next image
+	useEffect(() => {
+		if (pois.length > 0 && activeIndex < pois.length - 1) {
+			const nextPoi = pois[activeIndex + 1];
+			if (nextPoi.cover_image_url) {
+				const img = new Image();
+				img.src = nextPoi.cover_image_url;
+			}
+		}
+	}, [activeIndex, pois]);
 
 	// Keyboard navigation support
 	useEffect(() => {
@@ -144,7 +178,14 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 				loading={loading}
 			/>
 
-			<div className="h-full w-full overflow-y-scroll snap-y snap-mandatory snap-always no-scrollbar scroll-smooth relative">
+			<PullToRefresh
+				onRefresh={async () => {
+					await refetch();
+					// Add a small delay for better UX so user sees the spinner
+					await new Promise((resolve) => setTimeout(resolve, 500));
+				}}
+				className=""
+			>
 				{pois.length === 0 && loading ? (
 					<POICardSkeleton />
 				) : error ? (
@@ -175,7 +216,8 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 									<div
 										ref={isLast ? lastPoiElementRef : undefined}
 										key={poi.poi_id}
-										className="h-full w-full snap-start snap-always shrink-0"
+										data-index={index}
+										className="h-full w-full snap-start snap-always shrink-0 poi-card-container"
 									>
 										<POICard
 											poi={poi}
@@ -197,7 +239,7 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 						)}
 					</>
 				)}
-			</div>
+			</PullToRefresh>
 
 			<BottomNav />
 		</main>

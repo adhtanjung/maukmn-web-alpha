@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { SmartImage } from "@/components/ui/smart-image";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,30 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Progress } from "@/components/ui/progress";
 import { calculateWorkabilityScore } from "@/app/lib/utils/calculateWorkabilityScore";
 import { getOpenStatus } from "@/app/lib/utils/getOpenStatus";
 import { cn } from "@/lib/utils";
-import { POI } from "@/app/hooks/usePOIs"; // Assuming POI type is exported here like in the hook usage
+import { POI } from "@/app/hooks/usePOIs";
+import { usePOIDetail } from "./POIDetailContext";
+
+// Critical Imports (Immediate visibility)
+import { POIHeader } from "./POIHeader";
+import { ScoutBadgeOverlay } from "./ScoutBadgeOverlay";
+
+// Lazy-loaded Imports (Hidden or below fold)
+// Lazy-loaded Imports (Hidden or below fold)
+import { WorkProductivityDetails } from "./WorkProductivityDetails";
+import { AtmosphereDetails } from "./AtmosphereDetails";
+import { FoodDrinkDetails } from "./FoodDrinkDetails";
+
+const POIGallery = dynamic(
+	() => import("./POIGallery").then((mod) => mod.POIGallery),
+	{
+		loading: () => (
+			<div className="h-40 bg-muted/20 animate-pulse rounded-xl" />
+		),
+	},
+);
 
 // Skeleton Component - Exported so it can be used as Suspense Fallback
 export function POIDetailSkeleton() {
@@ -42,72 +62,102 @@ interface POIDetailContentProps {
 
 export default function POIDetailContent({
 	poi,
-	onClose,
+	onClose: onCloseProp,
 	className,
 }: POIDetailContentProps) {
 	const router = useRouter();
+	const poiDetail = usePOIDetail();
 	const [selectedImage, setSelectedImage] = useState<string | null>(null);
+	const [prevPoiId, setPrevPoiId] = useState<string | number | undefined>(
+		poi?.poi_id,
+	);
+	const [calculatedDistance, setCalculatedDistance] = useState<number | null>(
+		null,
+	);
+	const [geoError, setGeoError] = useState(false);
+
+	// Reset state when POI changes (Render-pass update to avoid effect sync warning)
+	if (poi?.poi_id !== prevPoiId) {
+		setPrevPoiId(poi?.poi_id);
+		setCalculatedDistance(null);
+		setGeoError(false);
+	}
+
+	// Use useSyncExternalStore for hydration-safe client detection
+	const mounted = useSyncExternalStore(
+		() => () => {},
+		() => true,
+		() => false,
+	);
+
+	const hasGeolocation = useSyncExternalStore(
+		() => () => {},
+		() => typeof window !== "undefined" && !!navigator.geolocation,
+		() => true,
+	);
+
+	const showDistanceLoading =
+		!poi?.distance && !calculatedDistance && hasGeolocation && !geoError;
+
+	useEffect(() => {
+		if (showDistanceLoading) {
+			const options = {
+				enableHighAccuracy: false,
+				timeout: 20000,
+				maximumAge: 60000,
+			};
+
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					console.log("[POIDetailContent] Position received");
+					const userLat = position.coords.latitude;
+					const userLng = position.coords.longitude;
+					const R = 6371e3; // metres
+					const φ1 = (userLat * Math.PI) / 180;
+					const φ2 = (poi.latitude! * Math.PI) / 180;
+					const Δφ = ((poi.latitude! - userLat) * Math.PI) / 180;
+					const Δλ = ((poi.longitude! - userLng) * Math.PI) / 180;
+
+					const a =
+						Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+						Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+					const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+					const d = R * c; // in metres
+					console.log("[POIDetailContent] Calculated distance:", d);
+					setCalculatedDistance(d);
+				},
+				(error) => {
+					console.warn("[POIDetailContent] Geolocation failed:", error.message);
+					setGeoError(true);
+				},
+				options,
+			);
+		}
+	}, [showDistanceLoading, poi]);
+
+	// Memoized Computations
+	const workabilityScore = useMemo(
+		() => (poi ? calculateWorkabilityScore(poi) : 0),
+		[poi],
+	);
+	const openStatus = useMemo(() => getOpenStatus(poi?.open_hours), [poi]);
+	const category = useMemo(
+		() => poi?.category_names?.[0] || poi?.brand || "Place",
+		[poi],
+	);
+	const priceDisplay = useMemo(
+		() => (poi?.price_range ? "$".repeat(poi.price_range) : "$$"),
+		[poi],
+	);
+
+	const allImages = useMemo(() => {
+		if (!poi) return [];
+		return [poi.cover_image_url, ...(poi.gallery_image_urls || [])].filter(
+			Boolean,
+		) as string[];
+	}, [poi]);
 
 	if (!poi) return null;
-
-	// Helpers
-	const workabilityScore = calculateWorkabilityScore(poi);
-	const openStatus = getOpenStatus(poi?.open_hours);
-	const category = poi?.category_names?.[0] || poi?.brand || "Place";
-	const priceDisplay = poi?.price_range ? "$".repeat(poi.price_range) : "$$";
-
-	// Mappers for Progress Bars
-	const getWifiPercent = (quality?: string) => {
-		switch (quality) {
-			case "excellent":
-				return 100;
-			case "fast":
-				return 85;
-			case "moderate":
-				return 50;
-			case "slow":
-				return 25;
-			default:
-				return 0;
-		}
-	};
-
-	const getPowerPercent = (amount?: string) => {
-		switch (amount) {
-			case "plenty":
-				return 90;
-			case "moderate":
-				return 60;
-			case "limited":
-				return 30;
-			default:
-				return 0;
-		}
-	};
-
-	const getNoisePercent = (level?: string) => {
-		// Representing "intensity"
-		switch (level) {
-			case "loud":
-				return 90;
-			case "lively":
-				return 70;
-			case "moderate":
-				return 50;
-			case "quiet":
-				return 25;
-			case "silent":
-				return 10;
-			default:
-				return 0;
-		}
-	};
-
-	// Image Handling
-	const allImages = [
-		poi.cover_image_url,
-		...(poi.gallery_image_urls || []),
-	].filter(Boolean) as string[];
 
 	const handleShare = async () => {
 		const url = `${window.location.origin}/poi/${poi.poi_id}`;
@@ -128,7 +178,12 @@ export default function POIDetailContent({
 
 	const handleDirections = () => {
 		if (poi.latitude && poi.longitude) {
-			router.push(
+			// Trigger the close animation/handler first
+			if (onCloseProp) onCloseProp();
+			if (poiDetail) poiDetail.close(true); // Skip default back navigation
+
+			// Use replace to ensure we swap the POI detail URL with the map URL
+			router.replace(
 				`/discovery/map?navigate=${poi.poi_id}&lat=${poi.latitude}&lng=${
 					poi.longitude
 				}&name=${encodeURIComponent(poi.name)}`,
@@ -139,7 +194,7 @@ export default function POIDetailContent({
 	return (
 		<div
 			className={cn(
-				"flex flex-col h-full bg-background font-sans overflow-hidden",
+				"flex flex-col h-[calc(100%+1.5rem)] -mt-6 bg-background font-sans overflow-hidden",
 				className,
 			)}
 		>
@@ -150,7 +205,7 @@ export default function POIDetailContent({
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
-						className="fixed inset-0 z-100 bg-black/95 flex items-center justify-center p-4"
+						className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
 						onClick={() => setSelectedImage(null)}
 					>
 						<motion.div
@@ -167,12 +222,15 @@ export default function POIDetailContent({
 								className="object-contain"
 								containerClassName="w-full h-full"
 							/>
-							<button
+							<Button
+								variant="ghost"
+								size="icon"
 								onClick={() => setSelectedImage(null)}
-								className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+								className="absolute top-4 right-4 bg-black/50 text-white rounded-full hover:bg-black/70 hover:text-white transition-colors h-10 w-10"
+								aria-label="Close lightbox"
 							>
 								<span className="material-symbols-outlined">close</span>
-							</button>
+							</Button>
 						</motion.div>
 					</motion.div>
 				)}
@@ -180,12 +238,29 @@ export default function POIDetailContent({
 
 			{/* Scrollable Content */}
 			<div className="flex-1 overflow-y-auto no-scrollbar relative">
+				{/* Drawer Handle - visible on top of image */}
+				<div className="absolute top-0 left-0 right-0 z-30 flex justify-center pt-3 pointer-events-none">
+					<div className="w-12 h-1.5 rounded-full bg-white/40 backdrop-blur-sm" />
+				</div>
 				{/* Hero Section */}
 				<div
-					className="relative h-[45vh] min-h-[400px] w-full group/hero cursor-pointer"
-					onClick={() =>
-						poi.cover_image_url && setSelectedImage(poi.cover_image_url)
-					}
+					className="relative h-[55vh] min-h-[400px] w-full group/hero cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					role="button"
+					tabIndex={0}
+					aria-label="View full cover image"
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							if (poi.cover_image_url) {
+								setSelectedImage(poi.cover_image_url);
+							}
+						}
+					}}
+					onClick={() => {
+						if (poi.cover_image_url) {
+							setSelectedImage(poi.cover_image_url);
+						}
+					}}
 				>
 					<div className="absolute inset-0">
 						{poi.cover_image_url ? (
@@ -193,9 +268,10 @@ export default function POIDetailContent({
 								src={poi.cover_image_url}
 								alt={poi.name}
 								fill
-								className="object-cover opacity-90 transition-transform duration-700 group-hover/hero:scale-105"
+								className="object-cover opacity-90 transition-transform duration-700"
 								containerClassName="w-full h-full"
 								priority
+								sizes="(max-width: 768px) 100vw, 450px"
 							/>
 						) : (
 							<div className="w-full h-full bg-zinc-800 flex items-center justify-center">
@@ -204,427 +280,155 @@ export default function POIDetailContent({
 								</span>
 							</div>
 						)}
-						<div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent pointer-events-none" />
+						<div className="absolute inset-0 bg-linear-to-t from-background via-background/20 to-transparent pointer-events-none" />
 					</div>
 
 					{/* Top Actions */}
-					<div className="absolute top-0 left-0 right-0 p-4 pt-6 flex justify-between items-center z-20 pointer-events-none">
-						<button
+					<div className="absolute top-0 left-0 right-0 p-4 pt-12 flex justify-between items-center z-20 pointer-events-none">
+						<Button
+							variant="ghost"
+							size="icon"
 							onClick={(e) => {
 								e.stopPropagation();
-								if (onClose) onClose();
+								if (onCloseProp) onCloseProp();
+								else if (poiDetail) poiDetail.close();
 								else router.back();
 							}}
-							className="pointer-events-auto h-10 w-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/40 transition-colors"
+							className="pointer-events-auto h-10 w-10 rounded-full bg-background/20 backdrop-blur-md border border-white/10 text-white hover:bg-background/40 hover:text-white transition-colors"
+							aria-label={onCloseProp || poiDetail ? "Close detail" : "Go back"}
 						>
 							<span className="material-symbols-outlined">
-								{onClose ? "close" : "arrow_back"}
+								{onCloseProp || poiDetail ? "close" : "arrow_back"}
 							</span>
-						</button>
+						</Button>
 						<div className="flex gap-3 pointer-events-auto">
-							<button
+							<Button
+								variant="ghost"
+								size="icon"
 								onClick={(e) => {
 									e.stopPropagation();
 									handleShare();
 								}}
-								className="h-10 w-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/40 transition-colors"
+								className="h-10 w-10 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/40 hover:text-white transition-colors"
+								aria-label="Share"
 							>
 								<span className="material-symbols-outlined">share</span>
-							</button>
-							<button
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
 								onClick={(e) => e.stopPropagation()}
-								className="h-10 w-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/40 transition-colors"
+								className="h-10 w-10 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/40 hover:text-white transition-colors"
+								aria-label="Add to favorites"
 							>
 								<span className="material-symbols-outlined">favorite</span>
-							</button>
+							</Button>
 						</div>
 					</div>
 
-					{/* Scout Badge Overlay */}
-					<div className="absolute bottom-16 right-5 z-20">
-						<div className="flex items-center gap-3 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 pr-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] ring-1 ring-white/5 hover:bg-zinc-900/60 transition-colors cursor-default">
-							<div className="relative">
-								{/* Placeholder Scout Image - In real app, this would come from user data */}
-								<div className="w-10 h-10 rounded-full bg-zinc-700 border-2 border-primary shadow-lg shadow-primary/20 flex items-center justify-center overflow-hidden">
-									<span className="material-symbols-outlined text-white">
-										person
-									</span>
-								</div>
-								<div className="absolute -bottom-1 -right-1 bg-zinc-900 rounded-full p-0.5 border border-white/10">
-									<div className="bg-primary/20 rounded-full p-0.5">
-										<span className="material-symbols-outlined text-[10px] text-primary block">
-											verified
-										</span>
-									</div>
-								</div>
-							</div>
-							<div className="flex flex-col">
-								<span className="text-[10px] font-extrabold text-primary uppercase tracking-wider leading-none mb-0.5 drop-shadow-sm">
-									Founding Scout
-								</span>
-								<span className="text-xs font-semibold text-white leading-none tracking-wide">
-									Discovered by <span className="opacity-90">@user</span>
-								</span>
-							</div>
-						</div>
-					</div>
+					<ScoutBadgeOverlay
+						foundingUser={poi.founding_user_username || "Maukemana Scout"}
+					/>
 				</div>
 
 				{/* Main Content Container */}
 				<div className="relative px-5 -mt-12 z-10 flex flex-col gap-6 pb-6">
-					{/* Header Info */}
-					<div className="flex flex-col gap-2">
-						<div className="flex items-start justify-between">
-							<div>
-								<h1 className="text-3xl font-bold tracking-tight text-foreground leading-tight shadow-black drop-shadow-lg">
-									{poi.name}
-								</h1>
-								<div className="flex items-center gap-2 mt-1">
-									<p className="text-zinc-300 font-medium text-sm">
-										{category}
-									</p>
-									<span className="h-1 w-1 rounded-full bg-zinc-500" />
-									{openStatus.isOpen ? (
-										<div className="flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-											<span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-											<span className="text-xs font-bold uppercase tracking-wide">
-												Open Now
+					<POIHeader
+						name={poi.name}
+						category={category}
+						openStatus={openStatus}
+						priceDisplay={priceDisplay}
+						description={poi.description || ""}
+						rating={poi.rating}
+						reviewCount={poi.reviews_count}
+						distance={
+							poi.distance
+								? `${(poi.distance / 1000).toFixed(1)}km`
+								: calculatedDistance
+									? `${(calculatedDistance / 1000).toFixed(1)}km`
+									: undefined
+						}
+						isLoadingDistance={showDistanceLoading}
+					/>
+
+					{/* Accordion Details - Only render after mount to prevent hydration mismatch */}
+					{mounted ? (
+						<Accordion
+							type="single"
+							collapsible
+							className="w-full flex flex-col gap-3"
+						>
+							{/* Location */}
+							<AccordionItem
+								value="location"
+								className="bg-card rounded-xl border border-border px-0 overflow-hidden"
+							>
+								<AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-accent/50 transition-colors">
+									<div className="flex items-center gap-3">
+										<div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+											<span className="material-symbols-outlined text-[20px]">
+												map
 											</span>
 										</div>
-									) : (
-										<div className="flex items-center gap-1 text-destructive bg-destructive/10 px-2 py-0.5 rounded-full border border-destructive/20">
-											<span className="text-xs font-bold uppercase tracking-wide">
-												Closed
-											</span>
-										</div>
-									)}
-								</div>
-							</div>
-						</div>
-
-						{/* Badges Row */}
-						<div className="flex items-center gap-4 mt-2">
-							<div className="flex items-center gap-1.5 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/5">
-								<span className="text-foreground font-black text-lg">4.5</span>
-								<div className="flex text-amber-400">
-									<span className="material-symbols-outlined text-[18px] fill-current">
-										star
-									</span>
-								</div>
-								<span className="text-muted-foreground text-xs ml-1">
-									(120)
-								</span>
-							</div>
-							<div className="flex items-center gap-1 text-muted-foreground text-sm">
-								<span className="material-symbols-outlined text-[18px]">
-									sell
-								</span>
-								<span>{priceDisplay}</span>
-							</div>
-							<div className="flex items-center gap-1 text-muted-foreground text-sm">
-								<span className="material-symbols-outlined text-[18px]">
-									location_on
-								</span>
-								<span>1.2mi</span>
-							</div>
-						</div>
-
-						{/* Description */}
-						<p className="text-muted-foreground text-sm leading-relaxed mt-2 line-clamp-3">
-							{poi.description}
-						</p>
-					</div>
-
-					{/* Accordion Details */}
-					<Accordion
-						type="single"
-						collapsible
-						className="w-full flex flex-col gap-3"
-					>
-						{/* Location */}
-						<AccordionItem
-							value="location"
-							className="bg-card rounded-xl border border-border px-0 overflow-hidden"
-						>
-							<AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-accent/50 transition-colors">
-								<div className="flex items-center gap-3">
-									<div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-										<span className="material-symbols-outlined text-[20px]">
-											map
-										</span>
-									</div>
-									<span className="font-semibold text-foreground">
-										Location
-									</span>
-								</div>
-							</AccordionTrigger>
-							<AccordionContent className="px-4 pb-4">
-								<div className="mt-4 rounded-xl overflow-hidden h-32 w-full relative bg-muted">
-									<div className="absolute inset-0 bg-zinc-800 flex items-center justify-center text-muted-foreground">
-										<span className="material-symbols-outlined text-4xl">
-											map
-										</span>
-									</div>
-									<div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-										<button
-											onClick={handleDirections}
-											className="bg-background/90 text-foreground text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1"
-										>
-											<span className="material-symbols-outlined text-[14px]">
-												near_me
-											</span>{" "}
-											View Map
-										</button>
-									</div>
-								</div>
-								<div className="mt-3 space-y-1">
-									<p className="text-foreground text-sm font-medium">
-										{poi.name} Location
-									</p>
-									<p className="text-muted-foreground text-xs">
-										Lat: {poi.latitude?.toFixed(4)}, Lng:{" "}
-										{poi.longitude?.toFixed(4)}
-									</p>
-								</div>
-							</AccordionContent>
-						</AccordionItem>
-
-						{/* Work & Productivity */}
-						<AccordionItem
-							value="work"
-							className="bg-card rounded-xl border border-border px-0 overflow-hidden"
-						>
-							<AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-accent/50 transition-colors">
-								<div className="flex items-center gap-3">
-									<div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
-										<span className="material-symbols-outlined text-[20px]">
-											laptop_mac
-										</span>
-									</div>
-									<div className="flex flex-col text-left">
 										<span className="font-semibold text-foreground">
-											Work & Productivity
+											Location
 										</span>
 									</div>
-								</div>
-							</AccordionTrigger>
-							<AccordionContent className="px-4 pb-4">
-								<div className="bg-background/50 p-5 rounded-2xl border border-border/50 shadow-sm mt-2">
-									<div className="flex items-center justify-between mb-5">
-										<h3 className="text-foreground font-bold text-base flex items-center gap-2">
-											<span className="material-symbols-outlined text-primary text-[20px]">
-												verified
-											</span>
-											Work Ready
-										</h3>
-										{workabilityScore && (
-											<span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded border border-primary/20">
-												{workabilityScore}/5
-											</span>
-										)}
-									</div>
-
-									<div className="space-y-5">
-										{/* WiFi */}
-										{poi.wifi_quality && (
-											<div>
-												<div className="flex justify-between items-end mb-2">
-													<span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-														Wi-Fi
-													</span>
-													<span className="text-foreground font-bold text-sm capitalize">
-														{poi.wifi_quality}
-													</span>
-												</div>
-												<Progress
-													value={getWifiPercent(poi.wifi_quality)}
-													className="h-2"
-													indicatorColor="bg-primary"
-												/>
-											</div>
-										)}
-
-										{/* Power */}
-										{poi.power_outlets && (
-											<div>
-												<div className="flex justify-between items-end mb-2">
-													<span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-														Power
-													</span>
-													<span className="text-foreground font-bold text-sm capitalize">
-														{poi.power_outlets}
-													</span>
-												</div>
-												<Progress
-													value={getPowerPercent(poi.power_outlets)}
-													className="h-2"
-													indicatorColor="bg-primary"
-												/>
-											</div>
-										)}
-
-										{/* Noise */}
-										{poi.noise_level && (
-											<div>
-												<div className="flex justify-between items-end mb-2">
-													<span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-														Noise
-													</span>
-													<span className="text-foreground font-bold text-sm capitalize">
-														{poi.noise_level}
-													</span>
-												</div>
-												<Progress
-													value={getNoisePercent(poi.noise_level)}
-													className="h-2"
-													indicatorColor="bg-yellow-500"
-												/>
-											</div>
-										)}
-									</div>
-
-									<div className="h-px bg-border w-full my-5" />
-
-									<div>
-										<div className="flex flex-wrap gap-2">
-											{poi.has_ac && (
-												<span className="text-xs text-foreground bg-accent px-3 py-1.5 rounded-lg border border-border flex items-center gap-1.5">
-													<span className="material-symbols-outlined text-[14px] text-primary">
-														ac_unit
-													</span>
-													AC Available
-												</span>
-											)}
-											{poi.outdoor_seating && (
-												<span className="text-xs text-foreground bg-accent px-3 py-1.5 rounded-lg border border-border flex items-center gap-1.5">
-													<span className="material-symbols-outlined text-[14px] text-primary">
-														deck
-													</span>
-													Outdoor Seating
-												</span>
-											)}
-										</div>
-									</div>
-								</div>
-							</AccordionContent>
-						</AccordionItem>
-
-						{/* Atmosphere */}
-						<AccordionItem
-							value="atmosphere"
-							className="bg-card rounded-xl border border-border px-0 overflow-hidden"
-						>
-							<AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-accent/50 transition-colors">
-								<div className="flex items-center gap-3">
-									<div className="h-8 w-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400">
-										<span className="material-symbols-outlined text-[20px]">
-											nightlife
-										</span>
-									</div>
-									<span className="font-semibold text-foreground">
-										Atmosphere
-									</span>
-								</div>
-							</AccordionTrigger>
-							<AccordionContent className="px-4 pb-4">
-								<div className="mt-4 space-y-3">
-									<div className="flex items-center justify-between py-2 border-b border-white/5">
-										<span className="text-muted-foreground text-sm">Vibe</span>
-										<span className="text-foreground text-sm font-medium capitalize">
-											{poi.vibes?.[0] || "Chill"}
-										</span>
-									</div>
-									<div className="flex items-center justify-between py-2 border-b border-white/5">
-										<span className="text-muted-foreground text-sm">
-											Noise Level
-										</span>
-										<div className="flex items-center gap-1">
-											<span className="material-symbols-outlined text-[16px] text-green-400">
-												volume_mute
-											</span>
-											<span className="text-foreground text-sm font-medium capitalize">
-												{poi.noise_level || "Unknown"}
+								</AccordionTrigger>
+								<AccordionContent className="px-4 pb-4">
+									<div className="mt-4 rounded-xl overflow-hidden h-32 w-full relative bg-muted">
+										<div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground">
+											<span className="material-symbols-outlined text-4xl">
+												map
 											</span>
 										</div>
+										<div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={handleDirections}
+												className="bg-background/90 text-foreground text-xs font-bold px-3 py-1.5 h-auto rounded-full shadow-lg backdrop-blur-sm hover:bg-background"
+											>
+												<span className="material-symbols-outlined text-[14px]">
+													near_me
+												</span>{" "}
+												View Map
+											</Button>
+										</div>
 									</div>
-								</div>
-							</AccordionContent>
-						</AccordionItem>
+									<div className="mt-3 space-y-1">
+										<p className="text-foreground text-sm font-medium">
+											{poi.name} Location
+										</p>
+										<p className="text-muted-foreground text-xs">
+											Lat: {poi.latitude?.toFixed(4)}, Lng:{" "}
+											{poi.longitude?.toFixed(4)}
+										</p>
+									</div>
+								</AccordionContent>
+							</AccordionItem>
 
-						{/* Food & Drink */}
-						<AccordionItem
-							value="food"
-							className="bg-card rounded-xl border border-border px-0 overflow-hidden"
-						>
-							<AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-accent/50 transition-colors">
-								<div className="flex items-center gap-3">
-									<div className="h-8 w-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400">
-										<span className="material-symbols-outlined text-[20px]">
-											restaurant
-										</span>
-									</div>
-									<span className="font-semibold text-foreground">
-										Food & Drink
-									</span>
-								</div>
-							</AccordionTrigger>
-							<AccordionContent className="px-4 pb-4">
-								<div className="mt-4 flex gap-2 flex-wrap">
-									{poi.cuisine && (
-										<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-xs text-foreground border border-border">
-											<span className="material-symbols-outlined text-[14px] text-green-400">
-												check_circle
-											</span>
-											{poi.cuisine}
-										</span>
-									)}
-									{poi.happy_hour_info && (
-										<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-xs text-foreground border border-border">
-											<span className="material-symbols-outlined text-[14px] text-green-400">
-												celebration
-											</span>
-											Happy Hour
-										</span>
-									)}
-									{!poi.cuisine && !poi.happy_hour_info && (
-										<span className="text-muted-foreground text-sm">
-											No specific food info available.
-										</span>
-									)}
-								</div>
-							</AccordionContent>
-						</AccordionItem>
-					</Accordion>
+							<WorkProductivityDetails
+								poi={poi}
+								workabilityScore={workabilityScore}
+							/>
 
-					{/* Gallery Section */}
-					<div className="py-4">
-						<div className="flex items-center justify-between mb-3 px-1">
-							<h3 className="text-lg font-bold text-foreground">Gallery</h3>
+							<AtmosphereDetails poi={poi} />
+
+							<FoodDrinkDetails poi={poi} />
+						</Accordion>
+					) : (
+						<div className="w-full flex flex-col gap-3">
+							{[1, 2, 3, 4].map((i) => (
+								<div
+									key={i}
+									className="h-16 bg-card rounded-xl animate-pulse"
+								/>
+							))}
 						</div>
-						<div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
-							{allImages.length > 0 ? (
-								allImages.map((src, idx) => (
-									<div
-										key={idx}
-										className="flex-none w-40 h-40 rounded-xl overflow-hidden snap-center ring-1 ring-white/10 relative cursor-pointer active:scale-95 transition-transform"
-										onClick={() => setSelectedImage(src)}
-									>
-										<SmartImage
-											src={src}
-											alt={`Gallery ${idx + 1}`}
-											fill
-											className="object-cover"
-											containerClassName="w-full h-full"
-										/>
-									</div>
-								))
-							) : (
-								<p className="text-muted-foreground text-sm p-4">
-									No photos available
-								</p>
-							)}
-						</div>
-					</div>
+					)}
+
+					<POIGallery images={allImages} onImageClick={setSelectedImage} />
 				</div>
 			</div>
 

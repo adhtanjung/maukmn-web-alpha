@@ -45,7 +45,13 @@ async function getPOI(id: string) {
 	}
 }
 
-export default async function POIDetailFetcher({ poiId }: { poiId: string }) {
+export default async function POIDetailFetcher({
+	poiId,
+	onClose,
+}: {
+	poiId: string;
+	onClose?: () => void;
+}) {
 	const poi = await getPOI(poiId);
 
 	if (!poi) {
@@ -56,5 +62,5 @@ export default async function POIDetailFetcher({ poiId }: { poiId: string }) {
 		);
 	}
 
-	return <POIDetailContent poi={poi} />;
+	return <POIDetailContent poi={poi} onClose={onClose} />;
 }

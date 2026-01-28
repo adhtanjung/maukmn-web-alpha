@@ -1,7 +1,12 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import {
+	Drawer,
+	DrawerContent,
+	DrawerTitle,
+	DrawerDescription,
+} from "@/components/ui/drawer";
 import { useRouter } from "next/navigation";
 
 interface POIDetailSheetProps {
@@ -37,6 +42,9 @@ export default function POIDetailSheet({
 		<Drawer open={open} onOpenChange={handleOpenChange}>
 			<DrawerContent className="bg-background border-border h-[94%] max-w-[430px] mx-auto rounded-t-2xl overflow-hidden">
 				<DrawerTitle className="sr-only">POI Details</DrawerTitle>
+				<DrawerDescription className="sr-only">
+					Detailed information about the selected place
+				</DrawerDescription>
 				{children}
 			</DrawerContent>
 		</Drawer>
