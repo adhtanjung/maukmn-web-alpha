@@ -10,7 +10,7 @@ export function MapControls({
 	isLocating: boolean;
 }) {
 	return (
-		<div className="absolute right-4 bottom-52 z-30 flex flex-col gap-3">
+		<div className="absolute right-4 bottom-[calc(13rem+env(safe-area-inset-bottom))] z-30 flex flex-col gap-3">
 			<Button
 				size="icon"
 				className="w-12 h-12 bg-card/90 backdrop-blur-md rounded-full border border-border hover:bg-accent hover:text-accent-foreground text-foreground shadow-sm"

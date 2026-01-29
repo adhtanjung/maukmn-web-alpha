@@ -62,8 +62,36 @@
 	-webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
 }
 
+@utility safe-top {
+	padding-top: env(safe-area-inset-top);
+}
+
+@utility safe-bottom {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility safe-left {
+	padding-left: env(safe-area-inset-left);
+}
+
+@utility safe-right {
+	padding-right: env(safe-area-inset-right);
+}
+
+@utility bottom-nav-spacing {
+	padding-bottom: calc(80px + 1rem + env(safe-area-inset-bottom));
+}
+
+@utility overscroll-contain {
+	overscroll-behavior: contain;
+}
+
 @utility filled {
-	font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+	font-variation-settings:
+		"FILL" 1,
+		"wght" 400,
+		"GRAD" 0,
+		"opsz" 24;
 }
 
 @layer base {

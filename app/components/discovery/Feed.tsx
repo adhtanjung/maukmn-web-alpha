@@ -11,16 +11,16 @@ import TopHeader from "./TopHeader";
 import POICard from "./POICard";
 import FeedSeparator from "./FeedSeparator";
 import EndOfFeedCard from "./EndOfFeedCard";
-import BottomNav from "@/components/layout/BottomNav";
 import { useRouter } from "next/navigation";
 import { PullToRefresh } from "@/app/components/ui/pull-to-refresh";
+import { useBottomNav } from "@/contexts/BottomNavContext";
 
 // Loading skeleton component
 function POICardSkeleton() {
 	return (
 		<div className="relative w-full h-full snap-start shrink-0 overflow-hidden bg-card animate-pulse">
 			<div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
-			<div className="absolute bottom-0 w-full px-5 pb-[100px] z-10 flex flex-col gap-3">
+			<div className="absolute bottom-0 w-full px-5 pb-[calc(100px+env(safe-area-inset-bottom))] z-10 flex flex-col gap-3">
 				<div className="h-8 w-3/4 bg-white/10 rounded" />
 				<div className="h-4 w-1/2 bg-white/10 rounded" />
 				<div className="h-12 w-full bg-white/10 rounded" />
@@ -159,6 +159,38 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, []);
 
+	// Scroll container ref for soft refresh/scroll-to-top logic
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+	const handleHomeClick = useCallback(async () => {
+		const container = scrollContainerRef.current;
+		if (!container) return;
+
+		// If scrolled down > 0, smooth scroll to top
+		// We use a small threshold (e.g. 5px) to be forgiving
+		if (container.scrollTop > 5) {
+			container.scrollTo({ top: 0, behavior: "smooth" });
+		} else {
+			// Already at top (or close enough) -> Soft Refresh
+			// Trigger haptic feedback if available (Web API)
+			if (window.navigator && window.navigator.vibrate) {
+				window.navigator.vibrate(10);
+			}
+
+			// Trigger refetch with visual feedback
+			await refetch();
+		}
+	}, [refetch]);
+
+	// Register home click handler with context
+	const { registerHomeClickHandler, unregisterHomeClickHandler } =
+		useBottomNav();
+
+	useEffect(() => {
+		registerHomeClickHandler(handleHomeClick);
+		return () => unregisterHomeClickHandler();
+	}, [handleHomeClick, registerHomeClickHandler, unregisterHomeClickHandler]);
+
 	return (
 		<main className="h-full w-full bg-background overflow-hidden relative">
 			<TopHeader
@@ -179,6 +211,7 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 			/>
 
 			<PullToRefresh
+				ref={scrollContainerRef}
 				onRefresh={async () => {
 					await refetch();
 					// Add a small delay for better UX so user sees the spinner
@@ -235,13 +268,19 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 							</div>
 						)}
 						{!loading && !hasMore && pois.length > 0 && (
-							<EndOfFeedCard onReset={resetFilters} />
+							<EndOfFeedCard
+								onReset={resetFilters}
+								onBackToTop={() => {
+									const container = scrollContainerRef.current;
+									if (container) {
+										container.scrollTo({ top: 0, behavior: "smooth" });
+									}
+								}}
+							/>
 						)}
 					</>
 				)}
 			</PullToRefresh>
-
-			<BottomNav />
 		</main>
 	);
 }

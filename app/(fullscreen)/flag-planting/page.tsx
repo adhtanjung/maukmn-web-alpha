@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import ScannerView from "../components/flag-planting/ScannerView";
+import ScannerView from "@/app/components/flag-planting/ScannerView";
 import { AnimatePresence, motion } from "motion/react";
-import VibeCheckOverlay from "../components/flag-planting/VibeCheckOverlay";
-import ClaimSuccessModal from "../components/flag-planting/ClaimSuccessModal";
-import NearbyPOICheck from "../components/flag-planting/NearbyPOICheck";
+import VibeCheckOverlay from "@/app/components/flag-planting/VibeCheckOverlay";
+import ClaimSuccessModal from "@/app/components/flag-planting/ClaimSuccessModal";
+import NearbyPOICheck from "@/app/components/flag-planting/NearbyPOICheck";
 import { useRouter } from "next/navigation";
 
 export default function FlagPlantingPage() {
@@ -31,7 +31,7 @@ export default function FlagPlantingPage() {
 						enableHighAccuracy: true,
 						timeout: 10_000,
 						maximumAge: 0,
-					})
+					}),
 			);
 
 			setUserLocation({

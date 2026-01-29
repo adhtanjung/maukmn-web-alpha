@@ -15,7 +15,7 @@ export function POIDetailCard({
 	const router = useRouter();
 
 	return (
-		<div className="absolute bottom-28 left-4 right-4 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
+		<div className="absolute bottom-[calc(7rem+env(safe-area-inset-bottom))] left-4 right-4 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
 			<div className="bg-card/95 backdrop-blur-xl rounded-lg p-4 shadow-lg border border-border flex gap-4 items-center relative">
 				<button
 					onClick={onClose}

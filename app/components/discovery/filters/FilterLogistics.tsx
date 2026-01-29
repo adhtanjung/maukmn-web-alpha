@@ -21,18 +21,32 @@ interface FilterLogisticsProps {
 	dietaryOptions: string[];
 	cuisine: string | null;
 	parkingOptions: string[];
+	// New Props
+	hasDelivery: boolean | null;
+	kidsFriendly: boolean | null;
+	petFriendly: boolean | null;
 	onDietaryToggle: (val: string) => void;
 	onCuisineChange: (val: string) => void;
 	onParkingToggle: (val: string) => void;
+	// New Handlers
+	onDeliveryChange: (val: boolean | null) => void;
+	onKidsChange: (val: boolean | null) => void;
+	onPetsChange: (val: boolean | null) => void;
 }
 
 export function FilterLogistics({
 	dietaryOptions,
 	cuisine,
 	parkingOptions,
+	hasDelivery,
+	kidsFriendly,
+	petFriendly,
 	onDietaryToggle,
 	onCuisineChange,
 	onParkingToggle,
+	onDeliveryChange,
+	onKidsChange,
+	onPetsChange,
 }: FilterLogisticsProps) {
 	return (
 		<div className="space-y-3">
@@ -41,9 +55,77 @@ export function FilterLogistics({
 			</h3>
 			<Accordion
 				type="multiple"
-				defaultValue={["dietary"]}
+				defaultValue={["dietary", "services"]}
 				className="space-y-2.5"
 			>
+				<AccordionItem
+					value="services"
+					className="bg-card rounded-xl overflow-hidden border border-border"
+				>
+					<AccordionTrigger className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted transition-colors select-none hover:no-underline">
+						<span className="text-xs font-bold text-foreground flex items-center gap-2">
+							<span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-primary">
+								<span className="material-symbols-outlined text-[16px]!">
+									local_offer
+								</span>
+							</span>
+							Amenities & Services
+						</span>
+					</AccordionTrigger>
+					<AccordionContent className="px-3 pb-4 pt-2 border-t border-border bg-background/50">
+						<div className="flex flex-wrap gap-2 mb-3">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => onDeliveryChange(hasDelivery ? null : true)}
+								className={cn(
+									"h-8 px-3 rounded-full text-[11px] border transition-all flex items-center gap-1.5",
+									hasDelivery
+										? "border-primary/50 bg-primary/10 text-primary shadow-sm"
+										: "border-border bg-card text-muted-foreground",
+								)}
+							>
+								<span className="material-symbols-outlined text-[14px]">
+									delivery_dining
+								</span>
+								Delivery Available
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => onKidsChange(kidsFriendly ? null : true)}
+								className={cn(
+									"h-8 px-3 rounded-full text-[11px] border transition-all flex items-center gap-1.5",
+									kidsFriendly
+										? "border-primary/50 bg-primary/10 text-primary shadow-sm"
+										: "border-border bg-card text-muted-foreground",
+								)}
+							>
+								<span className="material-symbols-outlined text-[14px]">
+									child_care
+								</span>
+								Kids Friendly
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => onPetsChange(petFriendly ? null : true)}
+								className={cn(
+									"h-8 px-3 rounded-full text-[11px] border transition-all flex items-center gap-1.5",
+									petFriendly
+										? "border-primary/50 bg-primary/10 text-primary shadow-sm"
+										: "border-border bg-card text-muted-foreground",
+								)}
+							>
+								<span className="material-symbols-outlined text-[14px]">
+									pets
+								</span>
+								Pet Friendly
+							</Button>
+						</div>
+					</AccordionContent>
+				</AccordionItem>
+
 				<AccordionItem
 					value="dietary"
 					className="bg-card rounded-xl overflow-hidden border border-border"
@@ -74,13 +156,13 @@ export function FilterLogistics({
 												"h-auto py-1 px-2.5 rounded-full text-[10px] border transition-all",
 												isSelected
 													? "border-primary/50 bg-primary/10 text-primary shadow-sm hover:bg-primary/20 hover:text-primary hover:border-primary/60"
-													: "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+													: "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
 											)}
 										>
 											{item}
 										</Button>
 									);
-								}
+								},
 							)}
 						</div>
 						<Select
@@ -94,6 +176,8 @@ export function FilterLogistics({
 								<SelectItem value="italian">Italian</SelectItem>
 								<SelectItem value="japanese">Japanese</SelectItem>
 								<SelectItem value="mexican">Mexican</SelectItem>
+								<SelectItem value="indonesian">Indonesian</SelectItem>
+								<SelectItem value="western">Western</SelectItem>
 							</SelectContent>
 						</Select>
 					</AccordionContent>

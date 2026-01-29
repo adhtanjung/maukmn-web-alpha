@@ -129,7 +129,7 @@ export default function ScannerView({ onCapture, onClose }: ScannerViewProps) {
 					<canvas ref={canvasRef} className="hidden" />
 
 					{/* HUD Overlay */}
-					<div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 pb-12 z-10">
+					<div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 pb-[calc(3rem+env(safe-area-inset-bottom))] z-10">
 						{/* Top Bar */}
 						<div className="flex justify-between items-start">
 							<div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">

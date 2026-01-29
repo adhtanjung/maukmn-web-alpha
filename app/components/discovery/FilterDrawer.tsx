@@ -43,6 +43,10 @@ const DEFAULT_INTERNAL_FILTERS: FilterState = {
 	parkingOptions: [],
 	hasAC: null,
 	cuisine: null,
+	hasDelivery: null,
+	kidsFriendly: null,
+	petFriendly: null,
+	waitTime: null,
 };
 
 export function FilterDrawer({
@@ -56,7 +60,7 @@ export function FilterDrawer({
 }: FilterDrawerProps) {
 	// Use internal state if not controlled
 	const [internalFilters, setInternalFilters] = useState<FilterState>(
-		DEFAULT_INTERNAL_FILTERS
+		DEFAULT_INTERNAL_FILTERS,
 	);
 
 	// Determine if we're in controlled mode
@@ -74,7 +78,7 @@ export function FilterDrawer({
 				setInternalFilters((prev) => ({ ...prev, [key]: value }));
 			}
 		},
-		[isControlled, onFiltersChange, currentFilters]
+		[isControlled, onFiltersChange, currentFilters],
 	);
 
 	// Toggle handler for array values
@@ -86,7 +90,7 @@ export function FilterDrawer({
 				| "dietaryOptions"
 				| "seatingOptions"
 				| "parkingOptions",
-			item: string
+			item: string,
 		) => {
 			const currentArray = currentFilters[key] || [];
 			const newArray = currentArray.includes(item)
@@ -95,7 +99,7 @@ export function FilterDrawer({
 
 			updateFilter(key, newArray);
 		},
-		[currentFilters, updateFilter]
+		[currentFilters, updateFilter],
 	);
 
 	// Reset handler
@@ -138,7 +142,7 @@ export function FilterDrawer({
 				}
 			}
 		},
-		[isControlled, onFiltersChange, currentFilters]
+		[isControlled, onFiltersChange, currentFilters],
 	);
 
 	return (
@@ -194,9 +198,15 @@ export function FilterDrawer({
 							dietaryOptions={currentFilters.dietaryOptions}
 							cuisine={currentFilters.cuisine}
 							parkingOptions={currentFilters.parkingOptions}
+							hasDelivery={currentFilters.hasDelivery}
+							kidsFriendly={currentFilters.kidsFriendly}
+							petFriendly={currentFilters.petFriendly}
 							onDietaryToggle={(val) => toggleSelection("dietaryOptions", val)}
 							onCuisineChange={(val) => updateFilter("cuisine", val)}
 							onParkingToggle={(val) => toggleSelection("parkingOptions", val)}
+							onDeliveryChange={(val) => updateFilter("hasDelivery", val)}
+							onKidsChange={(val) => updateFilter("kidsFriendly", val)}
+							onPetsChange={(val) => updateFilter("petFriendly", val)}
 						/>
 					</div>
 
@@ -211,7 +221,7 @@ export function FilterDrawer({
 									? "Loading..."
 									: `Show ${
 											resultCount !== undefined ? resultCount : 124
-									  } Results`}
+										} Results`}
 							</Button>
 						</DrawerClose>
 					</div>

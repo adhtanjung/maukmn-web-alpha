@@ -19,7 +19,7 @@ export default function HeartAnimation({
 					initial={{ scale: 0, opacity: 0 }}
 					animate={{ scale: 1, opacity: 1, rotate: [0, -15, 15, 0] }}
 					exit={{ scale: 0, opacity: 0 }}
-					transition={{ duration: 0.5, type: "spring" }}
+					transition={{ duration: 0.5, ease: "easeInOut" }}
 					className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
 					onAnimationComplete={onAnimationComplete}
 				>

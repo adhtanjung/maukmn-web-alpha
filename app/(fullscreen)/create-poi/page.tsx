@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence } from "motion/react";
+
 import { Suspense } from "react";
-import CreatePOIOverlay from "../components/poi-creation/CreatePOIOverlay";
-import { POIFormProvider } from "../contexts/POIFormContext";
+import CreatePOIOverlay from "@/app/components/poi-creation/CreatePOIOverlay";
+import { POIFormProvider } from "@/app/contexts/POIFormContext";
 
 import CreatePOILoading from "./loading";
 
@@ -29,14 +29,12 @@ function CreatePOIPageContent() {
 	return (
 		<POIFormProvider initialDraftId={initialDraftId}>
 			<main className="h-full w-full bg-background overflow-hidden relative">
-				<AnimatePresence mode="wait">
-					<CreatePOIOverlay
-						onClose={handleClose}
-						mode={mode}
-						initialTitle={mode === "edit" ? "Edit POI" : "Add New POI"}
-						key="create-poi-overlay"
-					/>
-				</AnimatePresence>
+				<CreatePOIOverlay
+					onClose={handleClose}
+					mode={mode}
+					initialTitle={mode === "edit" ? "Edit POI" : "Add New POI"}
+					key="create-poi-overlay"
+				/>
 			</main>
 		</POIFormProvider>
 	);

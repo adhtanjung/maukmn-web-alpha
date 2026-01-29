@@ -4,8 +4,17 @@ import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
-export default function BottomNav() {
+// Export height constant for layout calculations
+export const BOTTOM_NAV_HEIGHT = 80; // px, not including safe area
+
+export interface BottomNavProps {
+	onHomeClick?: () => void;
+	className?: string;
+}
+
+export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 	const router = useRouter();
 	const { isLoaded } = useUser();
 
@@ -16,12 +25,27 @@ export default function BottomNav() {
 		"flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 active:scale-95 transition-transform border border-border -mt-8 mb-2 ring-4 ring-background hover:brightness-110";
 
 	return (
-		<div className="absolute bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none">
+		<div
+			className={cn(
+				// Fixed positioning with proper centering
+				"fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50",
+				// Constrain to app max-width
+				"w-full max-w-[430px] px-4",
+				"flex justify-center pointer-events-none",
+				className,
+			)}
+		>
 			<div className="pointer-events-auto bg-card/90 backdrop-blur-xl border border-border/50 rounded-full h-[64px] shadow-2xl shadow-black/10 flex items-center justify-between px-6 gap-2 w-auto min-w-[320px] max-w-sm mx-4">
 				<Button
 					variant="ghost"
 					className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 hover:bg-muted/50 transition-colors group"
-					onClick={() => router.push("/")}
+					onClick={() => {
+						if (onHomeClick) {
+							onHomeClick();
+						} else {
+							router.push("/");
+						}
+					}}
 				>
 					<div className="relative flex flex-col items-center">
 						<span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform font-variation-settings-filled">

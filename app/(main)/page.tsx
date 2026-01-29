@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { POI } from "@/app/hooks/usePOIs";
-import Feed from "./components/discovery/Feed";
+import Feed from "@/app/components/discovery/Feed";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 

@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 import { ThemeProvider } from "@/app/components/theme-provider";
+import { BottomNavProvider } from "@/contexts/BottomNavContext";
 import NextTopLoader from "nextjs-toploader";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -33,6 +34,7 @@ export const viewport: Viewport = {
 	initialScale: 1,
 	maximumScale: 1,
 	userScalable: false,
+	viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -78,11 +80,13 @@ export default function RootLayout({
 						enableSystem={false}
 						disableTransitionOnChange
 					>
-						<NextTopLoader color="#ff4500" showSpinner={false} height={3} />
-						<div className="relative w-full h-full max-w-[430px] bg-background overflow-hidden shadow-2xl">
-							{children}
-							{modal}
-						</div>
+						<BottomNavProvider>
+							<NextTopLoader color="#ff4500" showSpinner={false} height={3} />
+							<div className="relative w-full h-full max-w-[430px] bg-background overflow-hidden shadow-2xl">
+								{children}
+								{modal}
+							</div>
+						</BottomNavProvider>
 					</ThemeProvider>
 				</body>
 			</html>

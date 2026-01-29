@@ -19,6 +19,10 @@ export interface FilterState {
 	parkingOptions: string[];
 	hasAC: boolean | null;
 	cuisine: string | null;
+	hasDelivery: boolean | null;
+	kidsFriendly: boolean | null;
+	petFriendly: boolean | null;
+	waitTime: number | null;
 	// Location for "nearest" sorting
 	lat?: number;
 	lng?: number;
@@ -38,6 +42,10 @@ export const DEFAULT_FILTERS: FilterState = {
 	parkingOptions: [],
 	hasAC: null,
 	cuisine: null,
+	hasDelivery: null,
+	kidsFriendly: null,
+	petFriendly: null,
+	waitTime: null,
 };
 
 interface UseFiltersResult {
@@ -198,6 +206,22 @@ export function useFilters(
 			params.set("parking_options", filters.parkingOptions.join(","));
 		}
 
+		if (filters.hasDelivery !== null) {
+			params.set("has_delivery", filters.hasDelivery.toString());
+		}
+
+		if (filters.kidsFriendly !== null) {
+			params.set("kids_friendly", filters.kidsFriendly.toString());
+		}
+
+		if (filters.petFriendly !== null) {
+			params.set("pet_friendly", filters.petFriendly.toString());
+		}
+
+		if (filters.waitTime !== null) {
+			params.set("wait_time_estimate", filters.waitTime.toString());
+		}
+
 		// Location for nearest sort
 		if (filters.sortBy === "nearest" && filters.lat && filters.lng) {
 			params.set("lat", filters.lat.toString());
@@ -222,6 +246,10 @@ export function useFilters(
 		count += filters.dietaryOptions.length;
 		count += filters.seatingOptions.length;
 		count += filters.parkingOptions.length;
+		if (filters.hasDelivery !== null) count++;
+		if (filters.kidsFriendly !== null) count++;
+		if (filters.petFriendly !== null) count++;
+		if (filters.waitTime !== null) count++;
 
 		return count;
 	}, [filters]);

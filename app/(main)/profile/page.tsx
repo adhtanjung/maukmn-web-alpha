@@ -5,7 +5,6 @@ import { useUserPOIs, UserPOI } from "@/app/hooks/useUserPOIs";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import BottomNav from "@/components/layout/BottomNav";
 import StickyHeader from "@/app/components/discovery/StickyHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -373,8 +372,6 @@ export default function ProfilePage() {
 					</p>
 				</div>
 			</motion.div>
-
-			<BottomNav />
 		</main>
 	);
 }

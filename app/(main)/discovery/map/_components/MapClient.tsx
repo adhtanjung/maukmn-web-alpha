@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/map";
 import maplibregl from "maplibre-gl";
 
-import BottomNav from "@/components/layout/BottomNav";
 import StickyHeader from "@/app/components/discovery/StickyHeader";
 import { POI, NavigationDestination, TravelMode } from "@/app/types/map";
 
@@ -825,8 +824,6 @@ export default function MapClient() {
 			{selectedPoi && (
 				<POIDetailCard poi={selectedPoi} onClose={handleClosePoi} />
 			)}
-
-			<BottomNav />
 		</main>
 	);
 }

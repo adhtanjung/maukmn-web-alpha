@@ -5,6 +5,18 @@ import { useAuth } from "@clerk/nextjs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+export interface Photo {
+	photo_id: string;
+	url: string;
+	score: number;
+	upvotes: number;
+	downvotes: number;
+	vibe_category?: string;
+	is_hero?: boolean;
+	is_admin_official?: boolean;
+	created_at: string;
+}
+
 export interface POI {
 	poi_id: string;
 	name: string;
@@ -13,7 +25,8 @@ export interface POI {
 	category_id?: string;
 	category_names?: string[];
 	cover_image_url?: string;
-	gallery_image_urls?: string[];
+	gallery_image_urls?: string[]; // Deprecated, use gallery_images
+	gallery_images?: Photo[]; // Rich photo objects
 	has_wifi: boolean;
 	outdoor_seating: boolean;
 	has_ac?: boolean;
@@ -40,6 +53,10 @@ export interface POI {
 	reservation_platform?: string;
 	is_wheelchair_accessible?: boolean;
 	parking_options?: string[];
+	payment_options?: string[];
+	has_delivery?: boolean;
+	wait_time_estimate?: number;
+	loyalty_program?: string;
 	// Metrics (Optional for now)
 	rating?: number;
 	reviews_count?: number;
