@@ -28,7 +28,7 @@ export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 		<div
 			className={cn(
 				// Fixed positioning with proper centering
-				"fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50",
+				"fixed bottom-[calc(0.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50",
 				// Constrain to app max-width
 				"w-full max-w-[430px] px-4",
 				"flex justify-center pointer-events-none",

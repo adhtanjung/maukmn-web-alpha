@@ -28,22 +28,22 @@ export default function TopHeader({
 	// Calculate active filter count
 	const activeFilterCount = filters
 		? (filters.priceRange !== 2 ? 1 : 0) + // Default price is 2 ($$)
-		  (filters.wifiQuality ? 1 : 0) +
-		  (filters.noiseLevel ? 1 : 0) +
-		  (filters.powerOutlets ? 1 : 0) +
-		  (filters.vibes?.length || 0) +
-		  (filters.crowdType?.length || 0) +
-		  (filters.dietaryOptions?.length || 0) +
-		  (filters.seatingOptions?.length || 0) +
-		  (filters.parkingOptions?.length || 0) +
-		  (filters.hasAC !== null ? 1 : 0) +
-		  (filters.cuisine ? 1 : 0)
+			(filters.wifiQuality ? 1 : 0) +
+			(filters.noiseLevel ? 1 : 0) +
+			(filters.powerOutlets ? 1 : 0) +
+			(filters.vibes?.length || 0) +
+			(filters.crowdType?.length || 0) +
+			(filters.dietaryOptions?.length || 0) +
+			(filters.seatingOptions?.length || 0) +
+			(filters.parkingOptions?.length || 0) +
+			(filters.hasAC !== null ? 1 : 0) +
+			(filters.cuisine ? 1 : 0)
 		: 0;
 
 	return (
 		<div className="absolute top-0 left-0 w-full z-50 pointer-events-none">
 			<div className="absolute inset-0 h-32 "></div>
-			<div className="absolute top-0 w-full pt-4 pb-2 px-4 flex flex-col gap-3 pointer-events-auto">
+			<div className="absolute top-0 w-full pt-[calc(1rem+env(safe-area-inset-top))] pb-2 px-4 flex flex-col gap-3 pointer-events-auto">
 				{/* Top Row: Search, Map, Auth */}
 				<div className="flex items-center gap-3 w-full">
 					{/* Search Bar */}
