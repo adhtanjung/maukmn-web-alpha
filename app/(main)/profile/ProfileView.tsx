@@ -17,6 +17,7 @@ import {
 	CardTitle,
 	CardDescription,
 } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import Image from "next/image";
