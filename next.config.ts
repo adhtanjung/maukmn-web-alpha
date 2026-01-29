@@ -25,6 +25,14 @@ const nextConfig: NextConfig = {
 				protocol: "https",
 				hostname: "maukemana-backend-743021038514.asia-southeast2.run.app",
 			},
+			{
+				protocol: "https",
+				hostname: "img.clerk.com",
+			},
+			{
+				protocol: "http",
+				hostname: "localhost",
+			},
 		],
 	},
 };

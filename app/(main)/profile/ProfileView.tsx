@@ -9,6 +9,15 @@ import StickyHeader from "@/app/components/discovery/StickyHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import ProfileLoading from "./loading";
@@ -84,41 +93,59 @@ const MySubmissionsSection = memo(
 		const router = useRouter();
 
 		return (
-			<div className="rounded-2xl bg-card border border-border overflow-hidden shadow-sm">
-				<div className="flex items-center justify-between p-4 border-b border-border">
+			<Card className="rounded-2xl border-border overflow-hidden shadow-sm">
+				<CardHeader className="flex flex-row items-center justify-between p-4 border-b border-border space-y-0">
 					<div className="flex items-center gap-2">
 						<span className="material-symbols-outlined text-primary">
 							description
 						</span>
-						<h3 className="font-bold text-foreground">My Submissions</h3>
+						<CardTitle className="font-bold text-base text-foreground">
+							My Submissions
+						</CardTitle>
 						<Badge variant="secondary" className="text-xs">
 							{total}
 						</Badge>
 					</div>
-				</div>
-				{pois.length === 0 ? (
-					<div className="p-6 text-center">
-						<span className="material-symbols-outlined text-4xl text-muted-foreground mb-2">
-							note_add
-						</span>
-						<p className="text-sm text-muted-foreground">No submissions yet</p>
-						<Button
-							variant="outline"
-							size="sm"
-							className="mt-3"
-							onClick={() => router.push("/create-poi")}
-						>
-							Create your first POI
-						</Button>
-					</div>
-				) : (
-					<div className="divide-y divide-border">
-						{pois.map((poi: UserPOI) => (
-							<POIListItem key={poi.poi_id} poi={poi} />
-						))}
-					</div>
-				)}
-			</div>
+				</CardHeader>
+				<CardContent className="p-0">
+					{pois.length === 0 ? (
+						<div className="p-6 text-center">
+							<span className="material-symbols-outlined text-4xl text-muted-foreground mb-2">
+								note_add
+							</span>
+							<p className="text-sm text-muted-foreground">
+								No submissions yet
+							</p>
+							<Button
+								variant="outline"
+								size="sm"
+								className="mt-3"
+								onClick={() => router.push("/create-poi")}
+							>
+								Create your first POI
+							</Button>
+						</div>
+					) : (
+						<>
+							{pois.length > 5 ? (
+								<ScrollArea className="h-[400px]">
+									<div className="divide-y divide-border">
+										{pois.map((poi: UserPOI) => (
+											<POIListItem key={poi.poi_id} poi={poi} />
+										))}
+									</div>
+								</ScrollArea>
+							) : (
+								<div className="divide-y divide-border">
+									{pois.map((poi: UserPOI) => (
+										<POIListItem key={poi.poi_id} poi={poi} />
+									))}
+								</div>
+							)}
+						</>
+					)}
+				</CardContent>
+			</Card>
 		);
 	},
 );
@@ -167,23 +194,25 @@ export default function ProfileView({
 				<div className="px-5 pt-2 pb-6">
 					<div className="flex items-start gap-5">
 						<div className="relative shrink-0">
-							<div className="relative h-20 w-20 rounded-full border-2 border-background shadow-lg overflow-hidden">
-								<Image
+							<Avatar className="h-20 w-20 border-2 border-background shadow-lg">
+								<AvatarImage
 									src={user?.imageUrl || ""}
 									alt={user?.fullName || "User profile"}
-									fill
 									className="object-cover"
-									sizes="80px"
 								/>
-							</div>
-							<button className="absolute -bottom-1 -right-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-1.5 border-[3px] border-background flex items-center justify-center shadow-sm transition-colors cursor-pointer">
+								<AvatarFallback>{user?.fullName?.[0] || "U"}</AvatarFallback>
+							</Avatar>
+							<Button
+								size="icon"
+								className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full border-[3px] border-background shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground"
+							>
 								<span
 									className="material-symbols-outlined"
 									style={{ fontSize: "14px" }}
 								>
 									edit
 								</span>
-							</button>
+							</Button>
 						</div>
 						<div className="flex-1 min-w-0 flex flex-col pt-1">
 							<div className="flex justify-between items-start">
@@ -207,7 +236,7 @@ export default function ProfileView({
 										Reviews
 									</span>
 								</div>
-								<div className="w-px h-6 bg-border"></div>
+								<Separator orientation="vertical" className="h-6" />
 								<div className="flex flex-col">
 									<span className="font-bold text-foreground text-base leading-none">
 										0
@@ -216,7 +245,7 @@ export default function ProfileView({
 										Photos
 									</span>
 								</div>
-								<div className="w-px h-6 bg-border"></div>
+								<Separator orientation="vertical" className="h-6" />
 								<div className="flex flex-col">
 									<span className="font-bold text-foreground text-base leading-none">
 										{poiTotal}
@@ -242,22 +271,22 @@ export default function ProfileView({
 						<motion.div
 							whileHover={{ scale: 1.02 }}
 							whileTap={{ scale: 0.98 }}
-							className="group flex items-center justify-between p-4 rounded-2xl bg-linear-to-r from-primary/20 via-primary/10 to-transparent border border-primary/20 cursor-pointer hover:bg-primary/25 transition-all"
+							className="group flex items-center justify-between p-4 rounded-lg bg-linear-to-r from-primary/20 via-primary/10 to-transparent border border-primary/20 cursor-pointer hover:bg-primary/25 transition-all"
 							onClick={() => router.push("/admin")}
 						>
 							<div className="flex items-center gap-3">
-								<div className="p-2 bg-primary text-primary-foreground rounded-xl shadow-lg shadow-primary/20">
+								<div className="p-2 text-primary-foreground rounded-2xl shadow-primary/20">
 									<span className="material-symbols-outlined">
 										admin_panel_settings
 									</span>
 								</div>
 								<div>
-									<p className="font-bold text-foreground text-base">
+									<CardTitle className="text-base text-foreground">
 										Admin Panel
-									</p>
-									<p className="text-xs text-primary/80 font-medium">
+									</CardTitle>
+									<CardDescription className="text-xs text-primary/80 font-medium">
 										Manage users & POIs
-									</p>
+									</CardDescription>
 								</div>
 							</div>
 							<div className="bg-background/20 rounded-full p-1 group-hover:bg-background/30 transition-colors">
@@ -274,7 +303,7 @@ export default function ProfileView({
 					{/* My Submissions Section */}
 					<MySubmissionsSection pois={initialPOIs} total={poiTotal} />
 
-					<div className="flex flex-col rounded-2xl bg-card border border-border overflow-hidden shadow-sm mt-4">
+					<Card className="flex flex-col rounded-2xl border-border overflow-hidden shadow-sm mt-4">
 						{/* Dark Mode Toggle */}
 						<div
 							className="flex items-center justify-between p-4 border-b border-border hover:bg-muted/50 cursor-pointer active:bg-muted transition-colors"
@@ -358,10 +387,13 @@ export default function ProfileView({
 								chevron_right
 							</span>
 						</div>
-					</div>
+					</Card>
 
 					<SignOutButton>
-						<button className="w-full p-3.5 mt-2 mb-8 rounded-2xl border border-destructive/20 bg-destructive/5 text-destructive font-bold flex items-center justify-center gap-2 hover:bg-destructive/10 active:scale-[0.98] transition-all">
+						<Button
+							variant="ghost"
+							className="w-full h-auto p-3.5 mt-2 mb-8 rounded-2xl border border-destructive/20 bg-destructive/5 text-destructive font-bold flex items-center justify-center gap-2 hover:bg-destructive/10 hover:text-destructive active:scale-[0.98] transition-all"
+						>
 							<span
 								className="material-symbols-outlined"
 								style={{ fontSize: "20px" }}
@@ -369,7 +401,7 @@ export default function ProfileView({
 								logout
 							</span>
 							Log Out
-						</button>
+						</Button>
 					</SignOutButton>
 
 					<p className="text-center text-[10px] text-muted-foreground mb-8 font-medium">
