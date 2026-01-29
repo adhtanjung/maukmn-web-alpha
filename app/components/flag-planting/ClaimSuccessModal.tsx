@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
@@ -11,18 +11,19 @@ interface ClaimSuccessModalProps {
 	poiId?: string;
 }
 
-export default function ClaimSuccessModal({
-	onClose,
-	poiId,
-}: ClaimSuccessModalProps) {
+const ClaimSuccessModal = memo(({ onClose, poiId }: ClaimSuccessModalProps) => {
 	const { user } = useUser();
 	const router = useRouter();
 
-	const handleAddDetails = () => {
+	const handleAddDetails = useCallback(() => {
 		if (poiId) {
 			router.push(`/create-poi?mode=edit&id=${poiId}`);
 		}
-	};
+	}, [poiId, router]);
+
+	const handleReturnToMap = useCallback(() => {
+		onClose();
+	}, [onClose]);
 
 	return (
 		<motion.div
@@ -89,7 +90,7 @@ export default function ClaimSuccessModal({
 							</Button>
 						)}
 						<Button
-							onClick={onClose}
+							onClick={handleReturnToMap}
 							variant={poiId ? "outline" : "default"}
 							className={`w-full h-12 rounded-full font-bold ${
 								!poiId
@@ -104,4 +105,8 @@ export default function ClaimSuccessModal({
 			</div>
 		</motion.div>
 	);
-}
+});
+
+ClaimSuccessModal.displayName = "ClaimSuccessModal";
+
+export default ClaimSuccessModal;

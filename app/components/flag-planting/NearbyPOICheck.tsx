@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, memo, useCallback } from "react";
+import useSWR from "swr";
 
 interface NearbyPOI {
 	poi_id: string;
@@ -23,6 +24,48 @@ interface NearbyPOICheckProps {
 	onClose: () => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+const NearbyPOIItem = memo(
+	({
+		poi,
+		onSelect,
+	}: {
+		poi: NearbyPOI;
+		onSelect: (poiId: string) => void;
+	}) => (
+		<button
+			onClick={() => onSelect(poi.poi_id)}
+			className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-transparent bg-muted/50 hover:border-primary hover:bg-primary/5 transition-all text-left"
+		>
+			{poi.cover_image_url ? (
+				// eslint-disable-next-line @next/next/no-img-element
+				<img
+					src={poi.cover_image_url}
+					alt={poi.name}
+					className="w-16 h-16 rounded-lg object-cover"
+				/>
+			) : (
+				<div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+					<span className="material-symbols-outlined text-muted-foreground">
+						location_on
+					</span>
+				</div>
+			)}
+			<div className="flex-1">
+				<p className="font-bold text-foreground">{poi.name}</p>
+				<p className="text-xs text-muted-foreground">
+					{Math.round(poi.distance_meters)}m away
+				</p>
+			</div>
+			<span className="material-symbols-outlined text-primary">
+				chevron_right
+			</span>
+		</button>
+	),
+);
+NearbyPOIItem.displayName = "NearbyPOIItem";
+
 export default function NearbyPOICheck({
 	latitude,
 	longitude,
@@ -31,57 +74,51 @@ export default function NearbyPOICheck({
 	onClose,
 }: NearbyPOICheckProps) {
 	const { getToken } = useAuth();
-	const [isLoading, setIsLoading] = useState(true);
-	const [nearbyPOIs, setNearbyPOIs] = useState<NearbyPOI[]>([]);
-	const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		async function checkNearby() {
-			try {
-				const token = await getToken();
-				if (!token) throw new Error("No auth token");
+	const fetcher = useCallback(
+		async (url: string) => {
+			const token = await getToken();
+			if (!token) throw new Error("No auth token");
 
-				const API_URL =
-					process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+			const response = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
 
-				// Check within 50m radius
-				const response = await fetch(
-					`${API_URL}/api/v1/pois/nearby?lat=${latitude}&lng=${longitude}&radius=50&limit=5`,
-					{
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					}
-				);
-
-				const result = await response.json();
-
-				if (!response.ok) {
-					throw new Error(result.error || "Failed to check nearby POIs");
-				}
-
-				// API response structure: { success: true, data: { data: [...], count: N, ... } }
-				// Extract the POI array from the nested response
-				const poiData = result?.data?.data || result?.data || [];
-				const poisArray = Array.isArray(poiData) ? poiData : [];
-				setNearbyPOIs(poisArray);
-			} catch (err) {
-				console.error("Nearby check error:", err);
-				setError(err instanceof Error ? err.message : "Unknown error");
-			} finally {
-				setIsLoading(false);
+			const result = await response.json();
+			if (!response.ok) {
+				throw new Error(result.error || "Failed to check nearby POIs");
 			}
-		}
 
-		checkNearby();
-	}, [latitude, longitude, getToken]);
+			// API response structure: { success: true, data: { data: [...], count: N, ... } }
+			const poiData = result?.data?.data || result?.data || [];
+			return Array.isArray(poiData) ? poiData : [];
+		},
+		[getToken],
+	);
+
+	const {
+		data: nearbyPOIs = [],
+		error,
+		isValidating,
+	} = useSWR<NearbyPOI[]>(
+		`${API_URL}/api/v1/pois/nearby?lat=${latitude}&lng=${longitude}&radius=50&limit=5`,
+		fetcher,
+		{
+			revalidateOnFocus: false,
+			shouldRetryOnError: false,
+		},
+	);
+
+	const isLoading = isValidating && nearbyPOIs.length === 0;
 
 	// Auto-proceed if no nearby POIs found
 	useEffect(() => {
-		if (!isLoading && nearbyPOIs.length === 0 && !error) {
+		if (!isLoading && !isValidating && nearbyPOIs.length === 0 && !error) {
 			onConfirmNew();
 		}
-	}, [isLoading, nearbyPOIs, error, onConfirmNew]);
+	}, [isLoading, isValidating, nearbyPOIs.length, error, onConfirmNew]);
 
 	if (isLoading) {
 		return (
@@ -111,7 +148,7 @@ export default function NearbyPOICheck({
 					<span className="material-symbols-outlined text-red-500 text-5xl">
 						error
 					</span>
-					<p className="text-white text-center">{error}</p>
+					<p className="text-white text-center">{error.message}</p>
 					<Button onClick={onConfirmNew} variant="secondary">
 						Continue Anyway
 					</Button>
@@ -121,7 +158,6 @@ export default function NearbyPOICheck({
 	}
 
 	if (nearbyPOIs.length === 0) {
-		// Auto-proceeds via useEffect
 		return null;
 	}
 
@@ -131,7 +167,6 @@ export default function NearbyPOICheck({
 			animate={{ opacity: 1, y: 0 }}
 			className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl rounded-t-3xl p-6 pb-12 border-t border-white/10 shadow-2xl z-30 max-h-[85vh] overflow-y-auto"
 		>
-			{/* Close Button - Top Right Corner */}
 			<Button
 				variant="ghost"
 				size="icon"
@@ -155,42 +190,16 @@ export default function NearbyPOICheck({
 					</p>
 				</div>
 
-				{/* List of nearby POIs */}
 				<div className="space-y-3">
 					{nearbyPOIs.map((poi) => (
-						<button
+						<NearbyPOIItem
 							key={poi.poi_id}
-							onClick={() => onSelectExisting(poi.poi_id)}
-							className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-transparent bg-muted/50 hover:border-primary hover:bg-primary/5 transition-all text-left"
-						>
-							{poi.cover_image_url ? (
-								// eslint-disable-next-line @next/next/no-img-element
-								<img
-									src={poi.cover_image_url}
-									alt={poi.name}
-									className="w-16 h-16 rounded-lg object-cover"
-								/>
-							) : (
-								<div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-									<span className="material-symbols-outlined text-muted-foreground">
-										location_on
-									</span>
-								</div>
-							)}
-							<div className="flex-1">
-								<p className="font-bold text-foreground">{poi.name}</p>
-								<p className="text-xs text-muted-foreground">
-									{Math.round(poi.distance_meters)}m away
-								</p>
-							</div>
-							<span className="material-symbols-outlined text-primary">
-								chevron_right
-							</span>
-						</button>
+							poi={poi}
+							onSelect={onSelectExisting}
+						/>
 					))}
 				</div>
 
-				{/* Confirm New Spot */}
 				<Button
 					onClick={onConfirmNew}
 					variant="outline"
