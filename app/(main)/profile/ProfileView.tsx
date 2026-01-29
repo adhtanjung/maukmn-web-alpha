@@ -1,6 +1,7 @@
 "use client";
 
 import { UserPOI } from "@/app/hooks/useUserPOIs";
+import { AppUser } from "@/app/types/user";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -24,7 +25,7 @@ interface ProfileViewProps {
 	initialPOIs: UserPOI[];
 	poiTotal: number;
 	isAdmin: boolean;
-	appUser: any; // Type this properly if shared types exist
+	appUser: AppUser | null;
 }
 
 function MySubmissionsSection({

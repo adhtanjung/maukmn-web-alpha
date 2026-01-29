@@ -2,9 +2,11 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ProfileView from "./ProfileView";
 
+import { AppUser } from "@/app/types/user";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-async function getAppUser(token: string) {
+async function getAppUser(token: string): Promise<AppUser | null> {
 	try {
 		const res = await fetch(`${API_URL}/api/me`, {
 			headers: {

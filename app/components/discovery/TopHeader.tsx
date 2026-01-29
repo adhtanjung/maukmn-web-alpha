@@ -1,11 +1,5 @@
 import Link from "next/link";
 import { FilterDrawer } from "./FilterDrawer";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { FilterState } from "@/app/hooks/useFilters";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 
@@ -26,179 +20,63 @@ export default function TopHeader({
 	resultCount,
 	loading,
 }: TopHeaderProps) {
-	// Calculate active filter count
-	const activeFilterCount = filters
-		? (filters.priceRange !== 2 ? 1 : 0) + // Default price is 2 ($$)
-			(filters.wifiQuality ? 1 : 0) +
-			(filters.noiseLevel ? 1 : 0) +
-			(filters.powerOutlets ? 1 : 0) +
-			(filters.vibes?.length || 0) +
-			(filters.crowdType?.length || 0) +
-			(filters.dietaryOptions?.length || 0) +
-			(filters.seatingOptions?.length || 0) +
-			(filters.parkingOptions?.length || 0) +
-			(filters.hasAC !== null ? 1 : 0) +
-			(filters.cuisine ? 1 : 0)
-		: 0;
-
 	return (
 		<div className="absolute top-0 left-0 w-full z-50 pointer-events-none">
-			<div className="absolute inset-0 h-32 "></div>
-			<div className="absolute top-0 w-full pt-[calc(1rem+env(safe-area-inset-top))] pb-2 px-4 flex flex-col gap-3 pointer-events-auto">
-				{/* Top Row: Search, Map, Auth */}
-				<div className="flex items-center gap-3 w-full">
-					{/* Search Bar */}
-					<GlassSurface
-						interactive
-						className="flex-1 h-12 flex items-center px-4 gap-3 active:scale-[0.99]"
-					>
-						<span className="material-symbols-outlined text-muted-foreground text-xl">
-							search
-						</span>
-						<input
-							className="bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-[15px] font-medium w-full h-full p-0 focus:ring-0"
-							disabled
-							placeholder="Search places, categories..."
-							type="text"
-						/>
-					</GlassSurface>
+			<div className="absolute inset-0 h-32 bg-linear-to-b from-black/60 to-transparent pointer-events-none" />
+			<div className="absolute top-0 w-full pt-[calc(1rem+env(safe-area-inset-top))] pb-2 px-4 flex justify-end gap-3 pointer-events-auto">
+				{/* Top Right Actions: Search & Map */}
 
-					{/* Map Button */}
-					<Link href="/discovery/map">
-						<GlassSurface
-							as="button"
-							interactive
-							className="w-12 h-12 flex items-center justify-center text-foreground active:scale-95"
-						>
-							<span className="material-symbols-outlined">map</span>
-						</GlassSurface>
-					</Link>
-				</div>
+				{/* Search Button - Triggers Search/Filter Mode */}
+				<GlassSurface
+					as="button"
+					interactive
+					className="w-12 h-12 flex items-center justify-center text-foreground active:scale-95 rounded-full"
+					onClick={() => {
+						// TODO: Trigger search/filter mode
+						// For now, we can perhaps toggle the filter drawer or just log
+						const drawerTrigger = document.getElementById(
+							"filter-drawer-trigger",
+						);
+						if (drawerTrigger) drawerTrigger.click();
+					}}
+				>
+					<span className="material-symbols-outlined text-[26px]">search</span>
+				</GlassSurface>
 
-				{/* Bottom Row: Filters */}
-				<div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar w-full -mx-4 px-4 mask-linear-fade">
-					<FilterDrawer
-						filters={filters}
-						onFiltersChange={onFiltersChange}
-						onApply={onApply}
-						onReset={onReset}
-						resultCount={resultCount}
-						loading={loading}
-					>
-						<GlassSurface
-							as="button"
-							id="filter-drawer-trigger"
-							suppressHydrationWarning
-							variant="pill"
-							interactive
-							className="h-9 pl-1 pr-3 flex items-center gap-2 shrink-0 hover:border-primary/50 active:scale-95"
-						>
-							<div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-sm">
-								<span className="material-symbols-outlined text-primary-foreground text-base">
-									tune
-								</span>
-							</div>
-							<span className="text-xs font-bold text-foreground tracking-wide">
-								Filter ({activeFilterCount})
-							</span>
-						</GlassSurface>
-					</FilterDrawer>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<GlassSurface
-								as="button"
-								id="sort-menu-trigger"
-								suppressHydrationWarning
-								variant="pill"
-								interactive
-								className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
-							>
-								<span className="text-xs font-medium text-foreground">
-									Sort By
-								</span>
-								<span className="material-symbols-outlined text-muted-foreground text-lg">
-									sort
-								</span>
-							</GlassSurface>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent className="bg-popover/80 backdrop-blur-xl border-border/50 text-popover-foreground min-w-[150px]">
-							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
-								Recommended
-							</DropdownMenuItem>
-							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
-								Nearest
-							</DropdownMenuItem>
-							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
-								Top Rated
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+				{/* Map Button */}
+				<Link href="/discovery/map">
 					<GlassSurface
 						as="button"
-						variant="pill"
 						interactive
-						className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
+						className="w-12 h-12 flex items-center justify-center text-foreground active:scale-95 rounded-full"
 					>
-						<span className="text-xs font-medium text-foreground">
-							All Categories
-						</span>
-						<span className="material-symbols-outlined text-muted-foreground text-lg">
-							expand_more
+						<span className="material-symbols-outlined text-[26px] filled">
+							map
 						</span>
 					</GlassSurface>
-					<GlassSurface
-						as="button"
-						variant="pill"
-						interactive
-						className="h-9 pl-3.5 pr-2 flex items-center gap-2 shrink-0"
-					>
-						<span className="text-xs font-medium text-foreground">
-							Open Now
-						</span>
-						<span className="material-symbols-outlined text-primary text-2xl -my-1 font-variation-settings-filled">
-							toggle_on
-						</span>
-					</GlassSurface>
-					<GlassSurface
-						as="button"
-						variant="pill"
-						interactive
-						className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
-					>
-						<span className="text-xs font-medium text-foreground">
-							Fast Wifi
-						</span>
-						<span className="material-symbols-outlined text-muted-foreground text-base">
-							add
-						</span>
-					</GlassSurface>
-					<GlassSurface
-						variant="pill"
-						className="h-9 p-1 flex items-center shrink-0"
-					>
-						<button className="w-8 h-full rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm">
-							$
-						</button>
-						<button className="w-8 h-full rounded-full text-muted-foreground text-[11px] font-medium flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-colors">
-							$$
-						</button>
-						<button className="w-8 h-full rounded-full text-muted-foreground text-[11px] font-medium flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-colors">
-							$$$
-						</button>
-					</GlassSurface>
-					<GlassSurface
-						as="button"
-						variant="pill"
-						interactive
-						className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
-					>
-						<span className="text-xs font-medium text-foreground">Nearby</span>
-						<span className="material-symbols-outlined text-muted-foreground text-lg">
-							expand_more
-						</span>
-					</GlassSurface>
-					<div className="w-4 shrink-0"></div>
-				</div>
+				</Link>
+
+				{/* Hidden Filter Trigger to keep FilterDrawer logic working for now if needed,
+				    or we can refactor FilterDrawer to be controlled.
+					For this step, I'm keeping the FilterDrawer accessible via the search button as a quick hack
+					or just hiding it until the dedicated screen is built.
+					The prompt says: "When the user taps the search icon, then you can transition to a dedicated search/filter screen."
+					I will wrap the Search button in the FilterDrawer for now so it still works!
+				*/}
+			</div>
+
+			{/* Hidden Drawer Trigger for Logic continuity */}
+			<div className="hidden">
+				<FilterDrawer
+					filters={filters}
+					onFiltersChange={onFiltersChange}
+					onApply={onApply}
+					onReset={onReset}
+					resultCount={resultCount}
+					loading={loading}
+				>
+					<button id="filter-drawer-trigger">Open</button>
+				</FilterDrawer>
 			</div>
 		</div>
 	);

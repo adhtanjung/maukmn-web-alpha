@@ -1,12 +1,14 @@
 import useSWR from "swr";
 import { useAuth } from "@clerk/nextjs";
 
+import { AppUser } from "@/app/types/user";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function useAppUser() {
 	const { getToken, isLoaded, userId } = useAuth();
 
-	const fetcher = async (url: string) => {
+	const fetcher = async (url: string): Promise<AppUser> => {
 		const token = await getToken();
 		if (!token) throw new Error("No token");
 
@@ -26,7 +28,7 @@ export function useAppUser() {
 
 	const { data, error, isLoading } = useSWR(
 		isLoaded && userId ? "/api/me" : null,
-		fetcher
+		fetcher,
 	);
 
 	return {

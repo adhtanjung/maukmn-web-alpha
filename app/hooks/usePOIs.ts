@@ -15,6 +15,8 @@ export interface Photo {
 	is_hero?: boolean;
 	is_admin_official?: boolean;
 	created_at: string;
+	rank?: number; // 1-5 for Top 5, undefined for others
+	user_vote?: number; // -1, 0, 1 - for local tracking
 }
 
 export interface POI {
@@ -62,6 +64,10 @@ export interface POI {
 	reviews_count?: number;
 	distance?: number;
 	founding_user_username?: string;
+	founding_user_level?: number;
+	founding_user_karma?: number;
+	founding_user_avatar?: string;
+	match_reason?: string; // "Why this matches you"
 }
 
 interface UsePOIsResult {
