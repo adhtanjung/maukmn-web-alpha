@@ -79,7 +79,7 @@
 }
 
 @utility bottom-nav-spacing {
-	padding-bottom: calc(80px + 1rem + env(safe-area-inset-bottom));
+	padding-bottom: calc(60px + 1rem + env(safe-area-inset-bottom));
 }
 
 @utility overscroll-contain {

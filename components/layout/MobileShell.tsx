@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import BottomNav from "./BottomNav";
 
 // Height constants for layout calculations
-export const BOTTOM_NAV_HEIGHT = 80; // px, not including safe area
+export const BOTTOM_NAV_HEIGHT = 60; // px, not including safe area
 export const HEADER_HEIGHT = 56; // px, not including safe area
 
 // Context for controlling layout visibility
@@ -113,7 +113,7 @@ export function MobileShell({
 					className={cn(
 						"flex-1 min-h-0 overflow-y-auto overscroll-contain",
 						shouldAddBottomPadding &&
-							"pb-[calc(80px+1rem+env(safe-area-inset-bottom))]",
+							"pb-[calc(60px+1rem+env(safe-area-inset-bottom))]",
 						contentClassName,
 					)}
 				>

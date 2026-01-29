@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { ThinkingLogoButton } from "@/components/ui/ThinkingLogoButton";
 // Export height constant for layout calculations
-export const BOTTOM_NAV_HEIGHT = 80; // px, not including safe area
+export const BOTTOM_NAV_HEIGHT = 60; // px, not including safe area
 
 export interface BottomNavProps {
 	onHomeClick?: () => void;
@@ -37,7 +37,7 @@ export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 			)}
 		>
 			<GlassSurface className="w-full flex flex-col pointer-events-auto border-x-0 border-b-0 rounded-none rounded-t-2xl">
-				<div className="h-[64px] flex items-center justify-between px-6 gap-2 w-full">
+				<div className="h-[54px] flex items-center justify-between px-6 gap-2 w-full">
 					<Button
 						variant="ghost"
 						className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 hover:bg-muted/50 transition-colors group"
