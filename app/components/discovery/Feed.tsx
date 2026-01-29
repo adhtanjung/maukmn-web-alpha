@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import {
 	useFilteredPOIs,
 	useFilters,
@@ -55,7 +55,8 @@ interface FeedProps {
 
 export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 	const router = useRouter();
-	const [activeIndex, setActiveIndex] = useState(0);
+	// Use Ref instead of State to track active index to avoid re-rendering entire list on scroll
+	const activeIndexRef = useRef(0);
 
 	// Use filter hook
 	const { filters, updateFilter, resetFilters, queryString } = useFilters({
@@ -97,7 +98,7 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		router.push(`/poi/${poiId}`, { scroll: false });
 	};
 
-	// Track active index for preloading
+	// Track active index for preloading using Ref (no re-renders)
 	useEffect(() => {
 		const options = {
 			root: null,
@@ -110,7 +111,16 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 				if (entry.isIntersecting) {
 					const index = Number(entry.target.getAttribute("data-index"));
 					if (!isNaN(index)) {
-						setActiveIndex(index);
+						activeIndexRef.current = index;
+
+						// Preload next image immediately
+						if (pois.length > 0 && index < pois.length - 1) {
+							const nextPoi = pois[index + 1];
+							if (nextPoi.cover_image_url) {
+								const img = new Image();
+								img.src = nextPoi.cover_image_url;
+							}
+						}
 					}
 				}
 			});
@@ -120,25 +130,17 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		cards.forEach((card) => observer.observe(card));
 
 		return () => observer.disconnect();
-	}, [pois.length]); // Re-run when pois change
+	}, [pois]); // Re-run when pois change
 
-	// Preload next image
-	useEffect(() => {
-		if (pois.length > 0 && activeIndex < pois.length - 1) {
-			const nextPoi = pois[activeIndex + 1];
-			if (nextPoi.cover_image_url) {
-				const img = new Image();
-				img.src = nextPoi.cover_image_url;
-			}
-		}
-	}, [activeIndex, pois]);
+	// Scroll container ref for soft refresh/scroll-to-top logic
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	// Keyboard navigation support
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 				e.preventDefault();
-				const container = document.querySelector(".snap-y");
+				const container = scrollContainerRef.current;
 				if (!container) return;
 
 				const scrollAmount = container.clientHeight;
@@ -158,9 +160,6 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, []);
-
-	// Scroll container ref for soft refresh/scroll-to-top logic
-	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	const handleHomeClick = useCallback(async () => {
 		const container = scrollContainerRef.current;
@@ -191,21 +190,29 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		return () => unregisterHomeClickHandler();
 	}, [handleHomeClick, registerHomeClickHandler, unregisterHomeClickHandler]);
 
+	// Memoize handlers to prevent TopHeader re-renders
+	const handleFiltersChange = useCallback(
+		(newFilters: Partial<FilterState>) => {
+			Object.entries(newFilters).forEach(([key, value]) => {
+				updateFilter(key as keyof FilterState, value);
+			});
+		},
+		[updateFilter],
+	);
+
+	const handleReset = useCallback(() => {
+		resetFilters();
+	}, [resetFilters]);
+
 	return (
 		<main className="h-full w-full bg-background overflow-hidden relative">
 			<TopHeader
 				filters={filters}
-				onFiltersChange={(newFilters) => {
-					// Batch update filters
-					Object.entries(newFilters).forEach(([key, value]) => {
-						updateFilter(key as keyof FilterState, value);
-					});
-				}}
+				onFiltersChange={handleFiltersChange}
 				onApply={() => {
-					// The hooks automatically update via queryString, so explicit apply isn't strictly needed for fetching,
-					// but can be used for UI feedback or closing drawers if managed here.
+					// The hooks automatically update via queryString
 				}}
-				onReset={resetFilters}
+				onReset={handleReset}
 				resultCount={total}
 				loading={loading}
 			/>

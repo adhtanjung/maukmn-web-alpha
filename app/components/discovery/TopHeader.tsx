@@ -7,6 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FilterState } from "@/app/hooks/useFilters";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 
 interface TopHeaderProps {
 	filters?: FilterState;
@@ -47,8 +48,11 @@ export default function TopHeader({
 				{/* Top Row: Search, Map, Auth */}
 				<div className="flex items-center gap-3 w-full">
 					{/* Search Bar */}
-					<div className="flex-1 h-12 bg-card/50 backdrop-blur-xl border border-border rounded-2xl flex items-center px-4 gap-3 shadow-lg active:scale-[0.99] transition-transform">
-						<span className="material-symbols-outlined text-muted-foreground">
+					<GlassSurface
+						interactive
+						className="flex-1 h-12 flex items-center px-4 gap-3 active:scale-[0.99]"
+					>
+						<span className="material-symbols-outlined text-muted-foreground text-xl">
 							search
 						</span>
 						<input
@@ -57,13 +61,17 @@ export default function TopHeader({
 							placeholder="Search places, categories..."
 							type="text"
 						/>
-					</div>
+					</GlassSurface>
 
 					{/* Map Button */}
 					<Link href="/discovery/map">
-						<button className="w-12 h-12 rounded-2xl bg-card/50 backdrop-blur-xl border border-border flex items-center justify-center text-foreground shadow-lg active:scale-95 transition-all hover:bg-accent hover:text-accent-foreground">
+						<GlassSurface
+							as="button"
+							interactive
+							className="w-12 h-12 flex items-center justify-center text-foreground active:scale-95"
+						>
 							<span className="material-symbols-outlined">map</span>
-						</button>
+						</GlassSurface>
 					</Link>
 				</div>
 
@@ -77,10 +85,13 @@ export default function TopHeader({
 						resultCount={resultCount}
 						loading={loading}
 					>
-						<button
+						<GlassSurface
+							as="button"
 							id="filter-drawer-trigger"
 							suppressHydrationWarning
-							className="h-9 pl-1 pr-3 rounded-full bg-card border border-border flex items-center gap-2 shrink-0 shadow-md active:scale-95 transition-transform hover:border-primary/50"
+							variant="pill"
+							interactive
+							className="h-9 pl-1 pr-3 flex items-center gap-2 shrink-0 hover:border-primary/50 active:scale-95"
 						>
 							<div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-sm">
 								<span className="material-symbols-outlined text-primary-foreground text-base">
@@ -90,14 +101,17 @@ export default function TopHeader({
 							<span className="text-xs font-bold text-foreground tracking-wide">
 								Filter ({activeFilterCount})
 							</span>
-						</button>
+						</GlassSurface>
 					</FilterDrawer>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<button
+							<GlassSurface
+								as="button"
 								id="sort-menu-trigger"
 								suppressHydrationWarning
-								className="h-9 px-3.5 rounded-full bg-card/50 border border-border flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-accent/50 transition-colors hover:bg-accent hover:text-accent-foreground"
+								variant="pill"
+								interactive
+								className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
 							>
 								<span className="text-xs font-medium text-foreground">
 									Sort By
@@ -105,9 +119,9 @@ export default function TopHeader({
 								<span className="material-symbols-outlined text-muted-foreground text-lg">
 									sort
 								</span>
-							</button>
+							</GlassSurface>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent className="bg-popover border-border text-popover-foreground min-w-[150px]">
+						<DropdownMenuContent className="bg-popover/80 backdrop-blur-xl border-border/50 text-popover-foreground min-w-[150px]">
 							<DropdownMenuItem className="text-xs font-medium cursor-pointer">
 								Recommended
 							</DropdownMenuItem>
@@ -119,47 +133,70 @@ export default function TopHeader({
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
-					<button className="h-9 px-3.5 rounded-full bg-card/50 border border-border flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-accent/50 transition-colors hover:bg-accent hover:text-accent-foreground">
+					<GlassSurface
+						as="button"
+						variant="pill"
+						interactive
+						className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
+					>
 						<span className="text-xs font-medium text-foreground">
 							All Categories
 						</span>
 						<span className="material-symbols-outlined text-muted-foreground text-lg">
 							expand_more
 						</span>
-					</button>
-					<button className="h-9 pl-3.5 pr-2 rounded-full bg-card/50 border border-border flex items-center gap-2 shrink-0 backdrop-blur-md active:bg-accent/50 transition-colors hover:bg-accent hover:text-accent-foreground">
+					</GlassSurface>
+					<GlassSurface
+						as="button"
+						variant="pill"
+						interactive
+						className="h-9 pl-3.5 pr-2 flex items-center gap-2 shrink-0"
+					>
 						<span className="text-xs font-medium text-foreground">
 							Open Now
 						</span>
-						<span className="material-symbols-outlined text-primary text-2xl -my-1">
+						<span className="material-symbols-outlined text-primary text-2xl -my-1 font-variation-settings-filled">
 							toggle_on
 						</span>
-					</button>
-					<button className="h-9 px-3.5 rounded-full bg-card/50 border border-border flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-accent/50 transition-colors hover:bg-accent hover:text-accent-foreground">
+					</GlassSurface>
+					<GlassSurface
+						as="button"
+						variant="pill"
+						interactive
+						className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
+					>
 						<span className="text-xs font-medium text-foreground">
 							Fast Wifi
 						</span>
 						<span className="material-symbols-outlined text-muted-foreground text-base">
 							add
 						</span>
-					</button>
-					<div className="h-9 p-1 rounded-full bg-card/50 border border-border flex items-center shrink-0 backdrop-blur-md">
-						<button className="w-8 h-full rounded-full bg-primary/20 border border-primary/30 text-primary-foreground text-[11px] font-bold flex items-center justify-center hover:bg-primary/30 transition-colors shadow-sm">
+					</GlassSurface>
+					<GlassSurface
+						variant="pill"
+						className="h-9 p-1 flex items-center shrink-0"
+					>
+						<button className="w-8 h-full rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm">
 							$
 						</button>
-						<button className="w-8 h-full rounded-full text-muted-foreground text-[11px] font-medium flex items-center justify-center hover:bg-accent hover:text-foreground transition-colors">
+						<button className="w-8 h-full rounded-full text-muted-foreground text-[11px] font-medium flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-colors">
 							$$
 						</button>
-						<button className="w-8 h-full rounded-full text-muted-foreground text-[11px] font-medium flex items-center justify-center hover:bg-accent hover:text-foreground transition-colors">
+						<button className="w-8 h-full rounded-full text-muted-foreground text-[11px] font-medium flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-colors">
 							$$$
 						</button>
-					</div>
-					<button className="h-9 px-3.5 rounded-full bg-card/50 border border-border flex items-center gap-1.5 shrink-0 backdrop-blur-md active:bg-accent/50 transition-colors hover:bg-accent hover:text-accent-foreground">
+					</GlassSurface>
+					<GlassSurface
+						as="button"
+						variant="pill"
+						interactive
+						className="h-9 px-3.5 flex items-center gap-1.5 shrink-0"
+					>
 						<span className="text-xs font-medium text-foreground">Nearby</span>
 						<span className="material-symbols-outlined text-muted-foreground text-lg">
 							expand_more
 						</span>
-					</button>
+					</GlassSurface>
 					<div className="w-4 shrink-0"></div>
 				</div>
 			</div>

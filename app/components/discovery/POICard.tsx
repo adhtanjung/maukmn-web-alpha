@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import { SmartImage } from "@/components/ui/smart-image";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ interface POICardProps {
 	isFirstCard?: boolean;
 }
 
-export default function POICard({
+export default memo(function POICard({
 	poi,
 	distance = "Nearby",
 	likes = 0,
@@ -602,4 +602,4 @@ export default function POICard({
 			</div>
 		</div>
 	);
-}
+});
