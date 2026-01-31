@@ -99,7 +99,7 @@ function GuidelineItem({
 			<span
 				className={cn(
 					"material-symbols-outlined text-sm mt-0.5",
-					type === "success" ? "text-green-500" : "text-red-500"
+					type === "success" ? "text-green-500" : "text-red-500",
 				)}
 			>
 				{icon}
@@ -131,7 +131,7 @@ function GalleryTip({
 		<div
 			className={cn(
 				"flex items-center gap-2 px-3 py-2 border rounded-lg shrink-0",
-				colorMap[color]
+				colorMap[color],
 			)}
 		>
 			<span className="material-symbols-outlined text-lg">{icon}</span>
@@ -317,14 +317,14 @@ export default function ProfileVisualsTab() {
 													"rounded-md object-cover transition-opacity",
 													!example.isGood
 														? "opacity-60"
-														: "group-hover:opacity-90"
+														: "group-hover:opacity-90",
 												)}
 											/>
 											<div className="absolute bottom-1 left-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-sm">
 												<span
 													className={cn(
 														"text-[12px] font-bold",
-														example.isGood ? "text-green-400" : "text-red-400"
+														example.isGood ? "text-green-400" : "text-red-400",
 													)}
 												>
 													{example.isGood ? "✓" : "✗"}
@@ -382,7 +382,7 @@ export default function ProfileVisualsTab() {
 								<div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
 									{(field.value || []).map((url: string, idx: number) => (
 										<div
-											key={url} // Use URL as key for robust deletion tracking
+											key={`${url}-${idx}`} // Use combination for uniqueness if duplicate URLs exist
 											className="relative aspect-square rounded-md overflow-hidden bg-background group border border-border cursor-pointer"
 											onClick={() =>
 												setPreviewImage({
@@ -405,7 +405,7 @@ export default function ProfileVisualsTab() {
 												onClick={(e) => {
 													e.stopPropagation();
 													const newValue = field.value.filter(
-														(val) => val !== url
+														(val) => val !== url,
 													);
 													field.onChange(newValue);
 												}}
@@ -541,7 +541,7 @@ export default function ProfileVisualsTab() {
 										"flex items-center gap-2 px-3 py-1.5 rounded-full",
 										previewImage.isGood
 											? "bg-green-500/10 text-green-500"
-											: "bg-red-500/10 text-red-500"
+											: "bg-red-500/10 text-red-500",
 									)}
 								>
 									<span className="material-symbols-outlined text-lg">

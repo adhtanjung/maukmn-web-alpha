@@ -24,6 +24,7 @@ interface ImageUploadProps {
 interface UploadState {
 	isUploading: boolean;
 	progress: number;
+	statusText?: string;
 	error: string | null;
 	count?: {
 		current: number;
@@ -61,33 +62,41 @@ export default function ImageUpload({
 			// Client-side Compression
 			let fileToUpload = file;
 			try {
-				const options = {
-					maxSizeMB: 1.5, // Target 1.5MB max to save server CPU/Memory
-					maxWidthOrHeight: 2048, // Limit resolution for standard HD use
-					useWebWorker: true,
-					initialQuality: 0.8,
-				};
-
-				// Only compress if larger than 1.5MB or 2048px
-				if (file.size > 1.5 * 1024 * 1024) {
+				// Only compress if larger than the server hard limit (25MB)
+				// Otherwise, upload original to preserve maximum quality
+				if (file.size > 25 * 1024 * 1024) {
 					console.log("Compressing image client-side...", file.name);
+					const options = {
+						maxSizeMB: 25, // Match server limit
+						// maxWidthOrHeight: 4096, // REMOVED: Do not resize, let server handle everything
+						useWebWorker: true,
+						initialQuality: 0.9, // Slight compression to fit under limit
+						alwaysKeepResolution: true,
+					};
+
 					const compressedFile = await imageCompression(file, options);
-					fileToUpload = new File([compressedFile], file.name, {
-						type: compressedFile.type,
-						lastModified: Date.now(),
-					});
-					console.log(
-						`Compression complete: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`,
-					);
+
+					// If compression made it larger (rare but possible), keep original
+					if (compressedFile.size < file.size) {
+						fileToUpload = new File([compressedFile], file.name, {
+							type: compressedFile.type,
+							lastModified: Date.now(),
+						});
+						console.log(
+							`Compression complete: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`,
+						);
+					} else {
+						console.log("Compression skipped (result larger than original)");
+					}
 				}
 			} catch (compressionError) {
 				console.warn(
 					"Client-side compression failed, uploading original:",
 					compressionError,
 				);
-				// Fallback to original, but respect absolute hard limit of 15MB
-				if (file.size > 15 * 1024 * 1024) {
-					throw new Error("File too large (failed to compress and > 15MB)");
+				// Absolute hard limit check
+				if (file.size > 25 * 1024 * 1024) {
+					throw new Error("File too large (> 25MB)");
 				}
 			}
 
@@ -170,6 +179,28 @@ export default function ImageUpload({
 			const data = await res.json();
 			const asset = data.data;
 
+			// Map backend status to user-friendly messages
+			const statusMessages: Record<string, { text: string; progress: number }> =
+				{
+					pending: { text: "Queueing...", progress: 20 },
+					downloading: { text: "Downloading...", progress: 30 },
+					processing: { text: "Optimizing...", progress: 50 },
+					uploading: { text: "Finalizing...", progress: 80 },
+					ready: { text: "Complete", progress: 100 },
+					failed: { text: "Failed", progress: 0 },
+				};
+
+			const status = statusMessages[asset.status] || {
+				text: "Processing...",
+				progress: 40,
+			};
+
+			setUploadState((s) => ({
+				...s,
+				statusText: status.text,
+				progress: status.progress,
+			}));
+
 			if (asset.status === "ready") {
 				// Return the URL for the "original" or best derivative representation
 				// For simple display, we can reconstruct the URL or use a specific derivative
@@ -229,9 +260,9 @@ export default function ImageUpload({
 			case "cover":
 				return "cover_1200";
 			case "gallery":
-				return "gallery_640"; // reasonable default for preview
+				return "gallery_960"; // TODO: INI GANTI KE 640 KALAU KEBERATAN
 			default:
-				return "general_640";
+				return "general_960";
 		}
 	};
 
@@ -239,7 +270,12 @@ export default function ImageUpload({
 		setUploadState({ isUploading: true, progress: 10, error: null });
 		try {
 			const url = await uploadSingleFile(file);
-			setUploadState({ isUploading: false, progress: 100, error: null });
+			setUploadState({
+				isUploading: false,
+				progress: 100,
+				statusText: "Success",
+				error: null,
+			});
 			onChange(url);
 		} catch (error) {
 			setUploadState({
@@ -389,7 +425,8 @@ export default function ImageUpload({
 							<p className="text-white text-xs font-medium">
 								{uploadState.count
 									? `Uploading ${uploadState.count.current}/${uploadState.count.total}`
-									: `Uploading ${uploadState.progress}%`}
+									: uploadState.statusText ||
+										`Uploading ${uploadState.progress}%`}
 							</p>
 						</div>
 					)}
@@ -420,7 +457,8 @@ export default function ImageUpload({
 								<p className="text-white text-xs font-medium">
 									{uploadState.count
 										? `Uploading ${uploadState.count.current}/${uploadState.count.total}`
-										: `Uploading ${uploadState.progress}%`}
+										: uploadState.statusText ||
+											`Uploading ${uploadState.progress}%`}
 								</p>
 							</div>
 						)}

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { FilterDrawer } from "./FilterDrawer";
 import { FilterState } from "@/app/hooks/useFilters";

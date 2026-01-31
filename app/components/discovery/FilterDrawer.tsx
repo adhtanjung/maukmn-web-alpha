@@ -8,7 +8,7 @@ import {
 	DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useSyncExternalStore } from "react";
 import { FilterState } from "@/app/hooks/useFilters";
 
 // Sub-components
@@ -118,7 +118,6 @@ export function FilterDrawer({
 		}
 	}, [onApply]);
 
-	// Quick filter handler
 	const handleQuickFilter = useCallback(
 		(presetId: string) => {
 			const presets: Record<string, Partial<FilterState>> = {
@@ -144,6 +143,16 @@ export function FilterDrawer({
 		},
 		[isControlled, onFiltersChange, currentFilters],
 	);
+
+	const mounted = useSyncExternalStore(
+		() => () => {},
+		() => true,
+		() => false,
+	);
+
+	if (!mounted) {
+		return <>{children}</>;
+	}
 
 	return (
 		<Drawer>
