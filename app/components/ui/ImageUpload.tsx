@@ -9,6 +9,16 @@ import { useImageUpload } from "@/app/hooks/use-image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import Cropper from "react-easy-crop";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import getCroppedImg from "@/lib/canvasUtils";
 
 interface ImageUploadProps {
 	value?: string | null;
@@ -19,6 +29,7 @@ interface ImageUploadProps {
 	aspectRatio?: "video" | "square";
 	className?: string;
 	onImageClick?: (url: string) => void;
+	croppingEnabled?: boolean;
 }
 
 interface UploadState {
@@ -32,6 +43,8 @@ interface UploadState {
 	};
 }
 
+type Area = { x: number; y: number; width: number; height: number };
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function ImageUpload({
@@ -43,6 +56,7 @@ export default function ImageUpload({
 	aspectRatio = "video",
 	className = "",
 	onImageClick,
+	croppingEnabled = false,
 }: ImageUploadProps) {
 	const { getToken } = useAuth();
 	const [uploadState, setUploadState] = useState<UploadState>({
@@ -141,6 +155,7 @@ export default function ImageUpload({
 				body: JSON.stringify({
 					upload_key: key,
 					category,
+					crop_data: cropData,
 				}),
 			});
 
@@ -331,12 +346,84 @@ export default function ImageUpload({
 		previewUrl,
 		fileInputRef,
 		handleThumbnailClick,
-		handleFileChange,
+		handleFileChange: hookHandleFileChange,
 		handleRemove: hookHandleRemove,
 	} = useImageUpload({
-		onUpload: (_, file) => handleUploadProcess(file),
+		onUpload: (_, file) => handleUploadProcess(file), // This handles the actual 'start upload'
 		onMultipleUpload: (items) => handleMultipleUploadProcess(items),
 	});
+
+	// --- Cropping State ---
+	const [cropModalOpen, setCropModalOpen] = useState(false);
+	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+	const [pendingFile, setPendingFile] = useState<File | null>(null);
+	const [crop, setCrop] = useState({ x: 0, y: 0 });
+	const [zoom, setZoom] = useState(1);
+	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null); // For preview generation
+	const [cropData, setCropData] = useState<Area | null>(null); // Relative coordinates (0-1) for backend
+	// Shadow previewUrl to show cropped version
+	const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+
+	const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
+		setCroppedAreaPixels(croppedAreaPixels);
+		// Convert percent crop to relative (0-1) for backend
+		setCropData({
+			x: croppedArea.x / 100,
+			y: croppedArea.y / 100,
+			width: croppedArea.width / 100,
+			height: croppedArea.height / 100,
+		});
+	};
+
+	const handleFileChange = useCallback(
+		async (e: React.ChangeEvent<HTMLInputElement>) => {
+			if (croppingEnabled && e.target.files && e.target.files.length > 0) {
+				const file = e.target.files[0];
+				// Read file for cropping
+				const reader = new FileReader();
+				reader.addEventListener("load", () => {
+					setImageToCrop(reader.result as string);
+					setPendingFile(file);
+					setCropModalOpen(true);
+					setZoom(1);
+					setCrop({ x: 0, y: 0 });
+				});
+				reader.readAsDataURL(file);
+				// Don't call hookHandleFileChange yet
+			} else {
+				hookHandleFileChange(e);
+			}
+		},
+		[croppingEnabled, hookHandleFileChange],
+	);
+
+	const handleCropSave = async () => {
+		if (!pendingFile || !imageToCrop || !croppedAreaPixels) return;
+
+		try {
+			// Generate preview blob for UI immediate feedback
+			const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
+			setLocalPreviewUrl(croppedImage);
+
+			// Proceed with upload of ORIGINAL file + crop data
+			// We manually trigger the upload process because we intercepted it
+			setCropModalOpen(false); // Close dialog first
+
+			// We need to wait for state update or pass cropData explicitly?
+			// cropData state is updated in onCropComplete, so it should be current.
+			// However, to be safe, we rely on the state being set.
+
+			// Start upload
+			handleUploadProcess(pendingFile);
+		} catch (e) {
+			console.error("Failed to crop/save", e);
+			setUploadState({
+				isUploading: false,
+				progress: 0,
+				error: "Failed to process crop",
+			});
+		}
+	};
 
 	const [isDragging, setIsDragging] = useState(false);
 
@@ -368,6 +455,21 @@ export default function ImageUpload({
 			);
 
 			if (files.length > 0) {
+				// If cropping enabled, take first file
+				if (croppingEnabled) {
+					const file = files[0];
+					const reader = new FileReader();
+					reader.addEventListener("load", () => {
+						setImageToCrop(reader.result as string);
+						setPendingFile(file);
+						setCropModalOpen(true);
+						setZoom(1);
+						setCrop({ x: 0, y: 0 });
+					});
+					reader.readAsDataURL(file);
+					return;
+				}
+
 				const fakeEvent = {
 					target: {
 						files: files,
@@ -376,83 +478,55 @@ export default function ImageUpload({
 				handleFileChange(fakeEvent);
 			}
 		},
-		[handleFileChange],
+		[croppingEnabled, handleFileChange],
 	);
 
 	const handleRemove = useCallback(() => {
 		hookHandleRemove();
 		onChange(null);
+		setLocalPreviewUrl(null);
+		setCropData(null);
+		setPendingFile(null);
 		setUploadState({ isUploading: false, progress: 0, error: null });
 	}, [hookHandleRemove, onChange]);
 
-	// Display either the hook's local preview or the persisted value
-	const displayUrl = previewUrl || value;
+	// Display either local crop preview, hook's preview, or persisted value
+	const displayUrl = localPreviewUrl || previewUrl || value;
 	const aspectClass =
 		aspectRatio === "square" ? "aspect-square" : "aspect-video";
 
 	return (
-		<div className={cn("w-full space-y-2", className)}>
-			<Input
-				type="file"
-				accept="image/*"
-				className="hidden"
-				ref={fileInputRef}
-				onChange={handleFileChange}
-				multiple={multiple}
-			/>
+		<>
+			<div className={cn("w-full space-y-2", className)}>
+				<Input
+					type="file"
+					accept="image/*"
+					className="hidden"
+					ref={fileInputRef}
+					onChange={handleFileChange}
+					multiple={multiple && !croppingEnabled} // Disable multiple if cropping
+				/>
 
-			{!displayUrl ? (
-				<div
-					onClick={handleThumbnailClick}
-					onDragOver={handleDragOver}
-					onDragEnter={handleDragEnter}
-					onDragLeave={handleDragLeave}
-					onDrop={handleDrop}
-					className={cn(
-						"flex flex-col items-center justify-center gap-4 rounded-sm border-2 border-dashed border-input bg-muted/30 transition-colors hover:bg-muted/50 cursor-pointer",
-						aspectClass,
-						isDragging && "border-primary/50 bg-primary/5",
-					)}
-				>
-					<div className="rounded-full bg-background p-3 shadow-sm ring-1 ring-border">
-						<ImagePlus className="h-6 w-6 text-muted-foreground" />
-					</div>
-
-					{/* Uploading Overlay for empty state */}
-					{uploadState.isUploading && (
-						<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center text-center px-4 rounded-sm">
-							<Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
-							<p className="text-white text-xs font-medium">
-								{uploadState.count
-									? `Uploading ${uploadState.count.current}/${uploadState.count.total}`
-									: uploadState.statusText ||
-										`Uploading ${uploadState.progress}%`}
-							</p>
-						</div>
-					)}
-				</div>
-			) : (
-				<div className="relative group">
+				{!displayUrl ? (
 					<div
+						onClick={handleThumbnailClick}
+						onDragOver={handleDragOver}
+						onDragEnter={handleDragEnter}
+						onDragLeave={handleDragLeave}
+						onDrop={handleDrop}
 						className={cn(
-							"relative overflow-hidden rounded-sm border bg-muted",
+							"flex flex-col items-center justify-center gap-4 rounded-sm border-2 border-dashed border-input bg-muted/30 transition-colors hover:bg-muted/50 cursor-pointer",
 							aspectClass,
-							onImageClick && "cursor-pointer",
+							isDragging && "border-primary/50 bg-primary/5",
 						)}
-						onClick={() => displayUrl && onImageClick?.(displayUrl)}
 					>
-						<Image
-							src={displayUrl}
-							alt="Preview"
-							fill
-							className="object-cover transition-transform duration-300 "
-							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-							unoptimized
-						/>
+						<div className="rounded-full bg-background p-3 shadow-sm ring-1 ring-border">
+							<ImagePlus className="h-6 w-6 text-muted-foreground" />
+						</div>
 
-						{/* Uploading Overlay */}
+						{/* Uploading Overlay for empty state */}
 						{uploadState.isUploading && (
-							<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center text-center px-4">
+							<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center text-center px-4 rounded-sm">
 								<Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
 								<p className="text-white text-xs font-medium">
 									{uploadState.count
@@ -462,42 +536,116 @@ export default function ImageUpload({
 								</p>
 							</div>
 						)}
+					</div>
+				) : (
+					<div className="relative group">
+						<div
+							className={cn(
+								"relative overflow-hidden rounded-sm border bg-muted",
+								aspectClass,
+								onImageClick && "cursor-pointer",
+							)}
+							onClick={() => displayUrl && onImageClick?.(displayUrl)}
+						>
+							<Image
+								src={displayUrl}
+								alt="Preview"
+								fill
+								className="object-cover transition-transform duration-300 "
+								sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+								unoptimized
+							/>
 
-						<div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100" />
-						<div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 z-10">
-							<Button
-								size="sm"
-								variant="secondary"
-								onClick={(e) => {
-									e.stopPropagation();
-									handleThumbnailClick();
-								}}
-								className="h-9 w-9 p-0 rounded-full"
-								type="button"
-							>
-								<Upload className="h-4 w-4" />
-							</Button>
-							<Button
-								size="sm"
-								variant="destructive"
-								onClick={(e) => {
-									e.stopPropagation();
-									handleRemove();
-								}}
-								className="h-9 w-9 p-0 rounded-full"
-								type="button"
-							>
-								<Trash2 className="h-4 w-4" />
-							</Button>
+							{/* Uploading Overlay */}
+							{uploadState.isUploading && (
+								<div className="absolute inset-0 z-20 bg-black/60 flex flex-col items-center justify-center text-center px-4">
+									<Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+									<p className="text-white text-xs font-medium">
+										{uploadState.count
+											? `Uploading ${uploadState.count.current}/${uploadState.count.total}`
+											: uploadState.statusText ||
+												`Uploading ${uploadState.progress}%`}
+									</p>
+								</div>
+							)}
+
+							<div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100" />
+							<div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 z-10">
+								<Button
+									size="sm"
+									variant="secondary"
+									onClick={(e) => {
+										e.stopPropagation();
+										handleThumbnailClick();
+									}}
+									className="h-9 w-9 p-0 rounded-full"
+									type="button"
+								>
+									<Upload className="h-4 w-4" />
+								</Button>
+								<Button
+									size="sm"
+									variant="destructive"
+									onClick={(e) => {
+										e.stopPropagation();
+										handleRemove();
+									}}
+									className="h-9 w-9 p-0 rounded-full"
+									type="button"
+								>
+									<Trash2 className="h-4 w-4" />
+								</Button>
+							</div>
 						</div>
 					</div>
-				</div>
-			)}
+				)}
 
-			{/* Error message */}
-			{uploadState.error && (
-				<p className="text-destructive text-xs ml-1">{uploadState.error}</p>
-			)}
-		</div>
+				{/* Error message */}
+				{uploadState.error && (
+					<p className="text-destructive text-xs ml-1">{uploadState.error}</p>
+				)}
+			</div>
+
+			<Dialog open={cropModalOpen} onOpenChange={setCropModalOpen}>
+				<DialogContent className="max-w-xl">
+					<DialogHeader>
+						<DialogTitle>Adjust Image</DialogTitle>
+					</DialogHeader>
+					<div className="relative w-full h-80 bg-black rounded-md overflow-hidden">
+						{imageToCrop && (
+							<Cropper
+								image={imageToCrop}
+								crop={crop}
+								zoom={zoom}
+								aspect={16 / 9}
+								onCropChange={setCrop}
+								onZoomChange={setZoom}
+								onCropComplete={onCropComplete}
+								showGrid={true}
+							/>
+						)}
+					</div>
+					<div className="py-4 space-y-4">
+						<div className="flex items-center gap-2">
+							<span className="text-sm font-medium">Zoom</span>
+							<Slider
+								value={[zoom]}
+								min={1}
+								max={3}
+								step={0.1}
+								onValueChange={(v) => setZoom(v[0])}
+								className="flex-1"
+							/>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setCropModalOpen(false)}>
+							Cancel
+						</Button>
+						<Button onClick={handleCropSave}>Save & Upload</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }

@@ -443,6 +443,7 @@ export default function ProfileVisualsTab() {
 												category="gallery"
 												aspectRatio="square"
 												className="w-full h-full"
+												croppingEnabled={true}
 											/>
 										</div>
 									)}
