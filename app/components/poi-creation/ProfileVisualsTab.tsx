@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import ImageUpload from "@/app/components/ui/ImageUpload";
 import type { POIFormData } from "@/app/contexts/POIFormContext";
 import { cn } from "@/lib/utils";
+import { Crop } from "lucide-react";
+import ImageCropperDialog from "@/app/components/ui/ImageCropperDialog";
 
 const CATEGORIES = [
 	{ id: "category.cafe", label: "Cafe", icon: "local_cafe" },
@@ -77,13 +79,6 @@ const GUIDELINES = [
 	},
 ] as const;
 
-const GALLERY_TIPS = [
-	{ icon: "restaurant", label: "Food & Drinks", color: "blue" },
-	{ icon: "chair", label: "Seating Areas", color: "purple" },
-	{ icon: "storefront", label: "Entrance", color: "amber" },
-	{ icon: "menu_book", label: "Menu", color: "emerald" },
-] as const;
-
 // Helper Components
 function GuidelineItem({
 	icon,
@@ -109,42 +104,13 @@ function GuidelineItem({
 	);
 }
 
-function GalleryTip({
-	icon,
-	label,
-	color,
-}: {
-	icon: string;
-	label: string;
-	color: string;
-}) {
-	// Map abstract colors to specific tailwind classes safely if needed,
-	// or use style for dynamic colors. Using standard theme colors for safety.
-	const colorMap: Record<string, string> = {
-		blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-		purple: "bg-purple-500/10 border-purple-500/20 text-purple-400",
-		amber: "bg-amber-500/10 border-amber-500/20 text-amber-400",
-		emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-	};
-
-	return (
-		<div
-			className={cn(
-				"flex items-center gap-2 px-3 py-2 border rounded-lg shrink-0",
-				colorMap[color],
-			)}
-		>
-			<span className="material-symbols-outlined text-lg">{icon}</span>
-			<span className="text-xs opacity-90">{label}</span>
-		</div>
-	);
-}
-
 export default function ProfileVisualsTab() {
 	const {
 		register,
 		control,
 		watch,
+		setValue,
+		getValues,
 		formState: { errors },
 	} = useFormContext<POIFormData>();
 	const description = watch("description") || "";
@@ -154,6 +120,8 @@ export default function ProfileVisualsTab() {
 		isGood?: boolean;
 		label?: string;
 	} | null>(null);
+	const [cropDialogOpen, setCropDialogOpen] = useState(false);
+	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
 	return (
 		<div className="px-4 py-4 space-y-6">
@@ -444,6 +412,7 @@ export default function ProfileVisualsTab() {
 												aspectRatio="square"
 												className="w-full h-full"
 												croppingEnabled={true}
+												cropAspectRatio={9 / 16}
 											/>
 										</div>
 									)}
@@ -471,6 +440,21 @@ export default function ProfileVisualsTab() {
 					>
 						<span className="material-symbols-outlined text-3xl">close</span>
 					</button>
+
+					{/* Crop Button (Only for uploaded gallery images) */}
+					{watch("galleryImages")?.includes(previewImage.src) && (
+						<button
+							className="absolute top-6 right-16 text-white hover:text-primary transition-colors z-50 mr-4"
+							onClick={() => {
+								setImageToCrop(previewImage.src);
+								setPreviewImage(null);
+								setCropDialogOpen(true);
+							}}
+							title="Crop Image"
+						>
+							<Crop className="w-8 h-8" />
+						</button>
+					)}
 
 					{/* Navigation Arrows for Gallery */}
 					{watch("galleryImages")?.includes(previewImage.src) && (
@@ -557,6 +541,26 @@ export default function ProfileVisualsTab() {
 					</div>
 				</div>
 			)}
+
+			{/* Crop Dialog */}
+			<ImageCropperDialog
+				open={cropDialogOpen}
+				onOpenChange={setCropDialogOpen}
+				imageUrl={imageToCrop}
+				aspectRatio={9 / 16}
+				onCropSuccess={(newUrl) => {
+					const currentImages = getValues("galleryImages") || [];
+					if (imageToCrop) {
+						const newImages = currentImages.map((img: string) =>
+							img === imageToCrop ? newUrl : img,
+						);
+						setValue("galleryImages", newImages, {
+							shouldDirty: true,
+							shouldTouch: true,
+						});
+					}
+				}}
+			/>
 		</div>
 	);
 }

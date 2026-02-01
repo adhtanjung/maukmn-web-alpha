@@ -516,8 +516,15 @@ export default function CreatePOIOverlay({
 		</div>
 	);
 
+	const isEditMode = mode === "edit";
+	const isLastTab = activeTab === "contact";
+
 	const footerContent = (
-		<FixedFooter showBorder contentClassName="flex flex-col gap-3">
+		<FixedFooter
+			showBorder
+			contentClassName="flex flex-col gap-3"
+			className="border-t bg-background/95 backdrop-blur-sm"
+		>
 			{saveFeedback && (
 				<div className="animate-in slide-in-from-bottom-5 fade-in duration-300">
 					<Alert
@@ -544,28 +551,31 @@ export default function CreatePOIOverlay({
 					</Alert>
 				</div>
 			)}
-			<div className="flex gap-3 w-full">
+			<div className="flex items-center gap-2 w-full">
 				<Button
 					variant="outline"
 					onClick={handleBack}
-					className="h-12 px-4 rounded-full border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors"
+					className="h-11 px-3 rounded-full border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors shrink-0"
 				>
 					{activeTab === "profile" ? "Cancel" : "Back"}
 				</Button>
+
 				<Button
 					variant="ghost"
 					onClick={handleDiscard}
-					className="h-12 w-12 rounded-full border border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive/80 transition-colors flex items-center justify-center"
+					className="h-11 w-11 rounded-full border border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive/80 transition-colors flex items-center justify-center shrink-0"
 					title="Discard Draft"
 				>
 					<span className="material-symbols-outlined text-xl">delete</span>
 				</Button>
+
 				<div className="flex-1" />
+
 				<Button
 					variant="ghost"
 					onClick={handleSaveDraft}
 					disabled={isDraftSaving}
-					className="h-12 w-12 rounded-full border border-border text-muted-foreground hover:bg-muted/50 transition-colors flex items-center justify-center"
+					className="h-11 w-11 rounded-full border border-border text-muted-foreground hover:bg-muted/50 transition-colors flex items-center justify-center shrink-0"
 					title="Save Draft"
 				>
 					<span
@@ -576,33 +586,32 @@ export default function CreatePOIOverlay({
 						{isDraftSaving ? "progress_activity" : "save"}
 					</span>
 				</Button>
+
 				<Button
-					onClick={activeTab === "contact" ? handleSubmit : handleNext}
+					onClick={isEditMode || isLastTab ? handleSubmit : handleNext}
 					disabled={
 						isSubmittingForm || (activeTab === "contact" && isDraftSaving)
 					}
-					className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+					className="flex-1 min-w-[120px] h-11 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed px-4"
 				>
 					{isSubmittingForm ? (
 						<>
 							<span className="material-symbols-outlined text-lg animate-spin">
 								progress_activity
 							</span>
-							Submitting...
+							<span className="truncate">Submitting...</span>
 						</>
 					) : (
 						<>
-							{activeTab === "contact"
-								? mode === "edit"
+							<span className="truncate">
+								{isEditMode
 									? "Save Changes"
-									: "Submit for Review"
-								: "Next Step"}
-							<span className="material-symbols-outlined text-lg">
-								{activeTab === "contact"
-									? mode === "edit"
-										? "save"
-										: "send"
-									: "arrow_forward"}
+									: isLastTab
+										? "Submit for Review"
+										: "Next Step"}
+							</span>
+							<span className="material-symbols-outlined text-lg shrink-0">
+								{isEditMode ? "save" : isLastTab ? "send" : "arrow_forward"}
 							</span>
 						</>
 					)}

@@ -3,7 +3,13 @@
 import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
-import { ImagePlus, Upload, Trash2, Loader2 } from "lucide-react";
+import {
+	ImagePlus,
+	Upload,
+	Trash2,
+	Loader2,
+	Crop as CropIcon,
+} from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { useImageUpload } from "@/app/hooks/use-image-upload";
 import { Button } from "@/components/ui/button";
@@ -26,10 +32,11 @@ interface ImageUploadProps {
 	onMultipleChange?: (urls: string[]) => void;
 	multiple?: boolean;
 	category?: "cover" | "gallery" | "profile" | "general";
-	aspectRatio?: "video" | "square";
+	aspectRatio?: "video" | "square" | "wide";
 	className?: string;
 	onImageClick?: (url: string) => void;
 	croppingEnabled?: boolean;
+	cropAspectRatio?: number;
 }
 
 interface UploadState {
@@ -57,6 +64,7 @@ export default function ImageUpload({
 	className = "",
 	onImageClick,
 	croppingEnabled = false,
+	cropAspectRatio,
 }: ImageUploadProps) {
 	const { getToken } = useAuth();
 	const [uploadState, setUploadState] = useState<UploadState>({
@@ -397,24 +405,121 @@ export default function ImageUpload({
 		[croppingEnabled, hookHandleFileChange],
 	);
 
+	// Extract hash from URL: .../img/{hash}/{rendition}
+	const getHashFromUrl = (url: string) => {
+		const parts = url.split("/");
+		// URL is likely .../img/HASH/rendition.webp or .../img/HASH/rendition
+		// We need to find the segment after 'img'
+		const imgIndex = parts.indexOf("img");
+		if (imgIndex !== -1 && imgIndex + 1 < parts.length) {
+			return parts[imgIndex + 1];
+		}
+		return null;
+	};
+
+	const handleEditClick = async () => {
+		if (!value) return;
+		const hash = getHashFromUrl(value);
+		if (!hash) {
+			console.error("Could not extract hash from URL", value);
+			return;
+		}
+
+		setUploadState({
+			isUploading: true,
+			progress: 0,
+			statusText: "Loading original...",
+			error: null,
+		});
+
+		try {
+			// Fetch original image
+			const originalUrl = `${API_URL}/img/${hash}/original`;
+			const response = await fetch(originalUrl);
+			if (!response.ok) throw new Error("Failed to load original image");
+
+			const blob = await response.blob();
+			const reader = new FileReader();
+			reader.addEventListener("load", () => {
+				setImageToCrop(reader.result as string);
+				setPendingFile(null); // Mark as "reprocessing existing"
+				setCropModalOpen(true);
+				setZoom(1);
+				setCrop({ x: 0, y: 0 });
+				setUploadState({ isUploading: false, progress: 0, error: null });
+			});
+			reader.readAsDataURL(blob);
+		} catch (e) {
+			console.error("Failed to load original", e);
+			setUploadState({
+				isUploading: false,
+				progress: 0,
+				error: "Failed to load original image",
+			});
+		}
+	};
+
 	const handleCropSave = async () => {
-		if (!pendingFile || !imageToCrop || !croppedAreaPixels) return;
+		if (!imageToCrop || !croppedAreaPixels) return;
 
 		try {
 			// Generate preview blob for UI immediate feedback
 			const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
 			setLocalPreviewUrl(croppedImage);
-
-			// Proceed with upload of ORIGINAL file + crop data
-			// We manually trigger the upload process because we intercepted it
 			setCropModalOpen(false); // Close dialog first
 
-			// We need to wait for state update or pass cropData explicitly?
-			// cropData state is updated in onCropComplete, so it should be current.
-			// However, to be safe, we rely on the state being set.
+			// If we have a pending file, it's a NEW upload
+			if (pendingFile) {
+				handleUploadProcess(pendingFile);
+				return;
+			}
 
-			// Start upload
-			handleUploadProcess(pendingFile);
+			// Otherwise, it's a REPROCESS of an existing asset
+			if (!value) return;
+			const hash = getHashFromUrl(value);
+			if (!hash) return;
+
+			// Handle Reprocess
+			setUploadState({
+				isUploading: true,
+				progress: 10,
+				error: null,
+				statusText: "Queueing re-crop...",
+			});
+
+			const token = await getToken();
+			const res = await fetch(`${API_URL}/api/v1/assets/${hash}/reprocess`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					crop_data: cropData, // logic sets cropData in onCropComplete
+				}),
+			});
+
+			if (!res.ok) throw new Error("Reprocessing request failed");
+
+			const data = await res.json();
+			const { asset_id } = data.data;
+
+			// Poll
+			const newUrl = await pollForCompletion(asset_id, token);
+
+			setUploadState({
+				isUploading: false,
+				progress: 100,
+				statusText: "Success",
+				error: null,
+			});
+
+			// Append timestamp to force refresh
+			const refreshUrl = newUrl.includes("?")
+				? `${newUrl}&t=${Date.now()}`
+				: `${newUrl}?t=${Date.now()}`;
+
+			onChange(refreshUrl);
 		} catch (e) {
 			console.error("Failed to crop/save", e);
 			setUploadState({
@@ -571,6 +676,21 @@ export default function ImageUpload({
 
 							<div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100" />
 							<div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 z-10">
+								{croppingEnabled && displayUrl && (
+									<Button
+										size="sm"
+										variant="secondary"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleEditClick();
+										}}
+										className="h-9 w-9 p-0 rounded-full"
+										type="button"
+										title="Crop / Edit"
+									>
+										<CropIcon className="h-4 w-4" />
+									</Button>
+								)}
 								<Button
 									size="sm"
 									variant="secondary"
@@ -580,6 +700,7 @@ export default function ImageUpload({
 									}}
 									className="h-9 w-9 p-0 rounded-full"
 									type="button"
+									title="Replace"
 								>
 									<Upload className="h-4 w-4" />
 								</Button>
@@ -592,6 +713,7 @@ export default function ImageUpload({
 									}}
 									className="h-9 w-9 p-0 rounded-full"
 									type="button"
+									title="Remove"
 								>
 									<Trash2 className="h-4 w-4" />
 								</Button>
@@ -617,7 +739,14 @@ export default function ImageUpload({
 								image={imageToCrop}
 								crop={crop}
 								zoom={zoom}
-								aspect={16 / 9}
+								aspect={
+									cropAspectRatio ||
+									(aspectRatio === "video"
+										? 16 / 9
+										: aspectRatio === "wide"
+											? 21 / 9
+											: 1)
+								}
 								onCropChange={setCrop}
 								onZoomChange={setZoom}
 								onCropComplete={onCropComplete}
