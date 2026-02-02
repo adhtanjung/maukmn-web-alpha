@@ -11,7 +11,6 @@ import TopHeader from "./TopHeader";
 import POICard from "./POICard";
 import FeedSeparator from "./FeedSeparator";
 import EndOfFeedCard from "./EndOfFeedCard";
-import { useRouter } from "next/navigation";
 import { PullToRefresh } from "@/app/components/ui/pull-to-refresh";
 import { useBottomNav } from "@/contexts/BottomNavContext";
 
@@ -54,7 +53,6 @@ interface FeedProps {
 }
 
 export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
-	const router = useRouter();
 	// Use Ref instead of State to track active index to avoid re-rendering entire list on scroll
 	const activeIndexRef = useRef(0);
 
@@ -92,11 +90,6 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 		},
 		[loading, hasMore, loadMore],
 	);
-
-	const handleMoreClick = (poiId: string) => {
-		// Navigation handled by Intercepting Routes
-		router.push(`/poi/${poiId}`, { scroll: false });
-	};
 
 	// Track active index for preloading using Ref (no re-renders)
 	useEffect(() => {
@@ -262,7 +255,7 @@ export default function Feed({ initialPOIs, initialTotal }: FeedProps) {
 										<POICard
 											poi={poi}
 											distance="Nearby"
-											onMoreClick={() => handleMoreClick(poi.poi_id)}
+											moreUrl={`/poi/${poi.poi_id}`}
 											isFirstCard={index === 0}
 										/>
 									</div>

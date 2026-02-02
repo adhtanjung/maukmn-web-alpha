@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
-import { useRouter } from "next/navigation";
-import { SmartImage } from "@/components/ui/smart-image";
-import { Button } from "@/components/ui/button";
+import { POI } from "@/app/hooks/usePOIs";
+import { useSavedPOIs, useSaveToggle } from "@/app/hooks/useSavedPOIs";
+import { calculateWorkabilityScore } from "@/app/lib/utils/calculateWorkabilityScore";
+import {
+	getDynamicBadges,
+	getFeaturedBadge,
+} from "@/app/lib/utils/getDynamicBadges";
+import { getOpenStatus } from "@/app/lib/utils/getOpenStatus";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Carousel,
 	CarouselContent,
@@ -12,16 +17,11 @@ import {
 	type CarouselApi,
 } from "@/components/ui/carousel";
 import { GlassSurface } from "@/components/ui/GlassSurface";
-import { POI } from "@/app/hooks/usePOIs";
-import { calculateWorkabilityScore } from "@/app/lib/utils/calculateWorkabilityScore";
-import { getOpenStatus } from "@/app/lib/utils/getOpenStatus";
-import {
-	getDynamicBadges,
-	getFeaturedBadge,
-} from "@/app/lib/utils/getDynamicBadges";
+import { SmartImage } from "@/components/ui/smart-image";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import HeartAnimation from "./HeartAnimation";
-import { useSavedPOIs, useSaveToggle } from "@/app/hooks/useSavedPOIs";
 
 /**
  * Internal sub-components to minimize re-renders of the main POICard
@@ -54,12 +54,12 @@ const ActionCluster = memo(function ActionCluster({
 	isSaved,
 	onToggleSave,
 	onDirections,
-	onMore,
+	moreUrl,
 }: {
 	isSaved: boolean;
 	onToggleSave: () => void;
-	onDirections: () => void;
-	onMore?: () => void;
+	onDirections?: string | null;
+	moreUrl?: string;
 }) {
 	return (
 		<div className="absolute right-4 bottom-[calc(9rem+env(safe-area-inset-bottom))] flex flex-col items-center gap-5 z-20">
@@ -94,40 +94,72 @@ const ActionCluster = memo(function ActionCluster({
 
 			{/* GO (Navigate) - Hero Action */}
 			<div className="flex flex-col items-center gap-1">
-				<GlassSurface
-					as="button"
-					variant="pill"
-					interactive
-					aria-label="Get directions"
-					className="w-14 h-14 flex items-center justify-center bg-primary! text-primary-foreground! border-primary/50! shadow-lg shadow-primary/20 scale-105"
-					onClick={onDirections}
-				>
-					<span className="material-symbols-outlined text-[32px] filled">
-						near_me
-					</span>
-				</GlassSurface>
+				{onDirections ? (
+					<Link
+						href={onDirections}
+						className="group"
+						aria-label="Get directions"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<GlassSurface
+							variant="pill"
+							interactive
+							className="w-14 h-14 flex items-center justify-center bg-primary! text-primary-foreground! border-primary/50! shadow-lg shadow-primary/20 scale-105"
+						>
+							<span className="material-symbols-outlined text-[32px] filled">
+								near_me
+							</span>
+						</GlassSurface>
+					</Link>
+				) : (
+					<GlassSurface
+						as="button"
+						variant="pill"
+						interactive
+						aria-label="Get directions (Disabled)"
+						className="w-14 h-14 flex items-center justify-center bg-muted text-muted-foreground border-border/50 scale-105 opacity-50 cursor-not-allowed"
+					>
+						<span className="material-symbols-outlined text-[32px] filled">
+							near_me
+						</span>
+					</GlassSurface>
+				)}
 				<span className="text-[11px] font-black text-white shadow-black/50 drop-shadow-md">
 					GO
 				</span>
 			</div>
 
-			{/* MORE (Bottom Sheet Trigger) */}
 			<div className="flex flex-col items-center gap-1 opacity-90">
-				<GlassSurface
-					as="button"
-					variant="pill"
-					interactive
-					aria-label="More options"
-					className="w-11 h-11 flex items-center justify-center bg-black/20! dark:bg-black/20! backdrop-blur-md! border-white/20!"
-					onClick={(e: React.MouseEvent) => {
-						e.stopPropagation();
-						onMore?.();
-					}}
-				>
-					<span className="material-symbols-outlined text-white text-[24px]">
-						more_horiz
-					</span>
-				</GlassSurface>
+				{moreUrl ? (
+					<Link
+						href={moreUrl}
+						className="group"
+						aria-label="More options"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<GlassSurface
+							variant="pill"
+							interactive
+							className="w-11 h-11 flex items-center justify-center bg-black/20! dark:bg-black/20! backdrop-blur-md! border-white/20!"
+						>
+							<span className="material-symbols-outlined text-white text-[24px]">
+								more_horiz
+							</span>
+						</GlassSurface>
+					</Link>
+				) : (
+					<GlassSurface
+						as="button"
+						variant="pill"
+						interactive
+						aria-label="More options"
+						className="w-11 h-11 flex items-center justify-center bg-black/20! dark:bg-black/20! backdrop-blur-md! border-white/20!"
+					>
+						<span className="material-symbols-outlined text-white text-[24px]">
+							more_horiz
+						</span>
+					</GlassSurface>
+				)}
 				<span className="text-[10px] font-bold text-white shadow-black/50 drop-shadow-md">
 					More
 				</span>
@@ -287,7 +319,7 @@ const POIInfo = memo(function POIInfo({
 interface POICardProps {
 	poi: POI;
 	distance?: string;
-	onMoreClick?: () => void;
+	moreUrl?: string;
 	/** Mark as the first visible card to prioritize LCP image loading */
 	isFirstCard?: boolean;
 }
@@ -295,10 +327,9 @@ interface POICardProps {
 export default memo(function POICard({
 	poi,
 	distance = "Nearby",
-	onMoreClick,
+	moreUrl,
 	isFirstCard = false,
 }: POICardProps) {
-	const router = useRouter();
 	const [api, setApi] = useState<CarouselApi>();
 	const [current, setCurrent] = useState(0);
 	const [showHeart, setShowHeart] = useState(false);
@@ -369,16 +400,15 @@ export default memo(function POICard({
 		lastTap.current = now;
 	}, [isPoiSaved, toggleSave, poi.poi_id]);
 
-	// Navigate to map with directions mode
-	const handleDirections = useCallback(() => {
+	// Calculate directions URL for instant navigation
+	const directionsUrl = useMemo(() => {
 		if (poi.latitude && poi.longitude) {
-			router.push(
-				`/discovery/map?navigate=${poi.poi_id}&lat=${poi.latitude}&lng=${
-					poi.longitude
-				}&name=${encodeURIComponent(poi.name)}`,
-			);
+			return `/discovery/map?navigate=${poi.poi_id}&lat=${poi.latitude}&lng=${
+				poi.longitude
+			}&name=${encodeURIComponent(poi.name)}`;
 		}
-	}, [poi.latitude, poi.longitude, poi.poi_id, poi.name, router]);
+		return null;
+	}, [poi.latitude, poi.longitude, poi.poi_id, poi.name]);
 
 	const category = poi.category_names?.[0] || poi.brand || "Place";
 
@@ -447,8 +477,8 @@ export default memo(function POICard({
 			<ActionCluster
 				isSaved={isPoiSaved}
 				onToggleSave={() => toggleSave(poi.poi_id)}
-				onDirections={handleDirections}
-				onMore={onMoreClick}
+				onDirections={directionsUrl}
+				moreUrl={moreUrl}
 			/>
 
 			{/* POI Info */}

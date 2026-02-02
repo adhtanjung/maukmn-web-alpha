@@ -2,8 +2,9 @@
 
 import { UserPOI } from "@/app/hooks/useUserPOIs";
 import { AppUser } from "@/app/types/user";
+import Link from "next/link";
 import { useUser, SignOutButton } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+
 import { motion } from "motion/react";
 import StickyHeader from "@/app/components/discovery/StickyHeader";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +42,6 @@ interface ProfileViewProps {
 }
 
 const POIListItem = memo(({ poi }: { poi: UserPOI }) => {
-	const router = useRouter();
 	return (
 		<div className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
 			<div className="flex items-center gap-3 min-w-0 flex-1">
@@ -76,13 +76,10 @@ const POIListItem = memo(({ poi }: { poi: UserPOI }) => {
 					</Badge>
 				</div>
 			</div>
-			<Button
-				variant="ghost"
-				size="icon"
-				className="shrink-0"
-				onClick={() => router.push(`/edit-poi/${poi.poi_id}`)}
-			>
-				<span className="material-symbols-outlined text-lg">edit</span>
+			<Button asChild variant="ghost" size="icon" className="shrink-0">
+				<Link href={`/edit-poi/${poi.poi_id}`}>
+					<span className="material-symbols-outlined text-lg">edit</span>
+				</Link>
 			</Button>
 		</div>
 	);
@@ -91,8 +88,6 @@ POIListItem.displayName = "POIListItem";
 
 const MySubmissionsSection = memo(
 	({ pois, total }: { pois: UserPOI[]; total: number }) => {
-		const router = useRouter();
-
 		return (
 			<Card className="rounded-2xl border-border overflow-hidden shadow-sm">
 				<CardHeader className="flex flex-row items-center justify-between p-4 border-b border-border space-y-0">
@@ -117,13 +112,8 @@ const MySubmissionsSection = memo(
 							<p className="text-sm text-muted-foreground">
 								No submissions yet
 							</p>
-							<Button
-								variant="outline"
-								size="sm"
-								className="mt-3"
-								onClick={() => router.push("/create-poi")}
-							>
-								Create your first POI
+							<Button asChild variant="outline" size="sm" className="mt-3">
+								<Link href="/create-poi">Create your first POI</Link>
 							</Button>
 						</div>
 					) : (
@@ -158,7 +148,6 @@ export default function ProfileView({
 	isAdmin,
 }: ProfileViewProps) {
 	const { user, isLoaded } = useUser();
-	const router = useRouter();
 	const { theme, setTheme } = useTheme();
 
 	// If Clerk is still loading, we show skeleton, but main data is already here via props
@@ -269,36 +258,37 @@ export default function ProfileView({
 				<div className="px-4 flex flex-col gap-4">
 					{/* Admin Panel Button - Only visible to admins */}
 					{isAdmin && (
-						<motion.div
-							whileHover={{ scale: 1.02 }}
-							whileTap={{ scale: 0.98 }}
-							className="group flex items-center justify-between p-4 rounded-lg bg-linear-to-r from-primary/20 via-primary/10 to-transparent border border-primary/20 cursor-pointer hover:bg-primary/25 transition-all"
-							onClick={() => router.push("/admin")}
-						>
-							<div className="flex items-center gap-3">
-								<div className="p-2 text-primary-foreground rounded-2xl shadow-primary/20">
-									<span className="material-symbols-outlined">
-										admin_panel_settings
+						<Link href="/admin">
+							<motion.div
+								whileHover={{ scale: 1.02 }}
+								whileTap={{ scale: 0.98 }}
+								className="group flex items-center justify-between p-4 rounded-lg bg-linear-to-r from-primary/20 via-primary/10 to-transparent border border-primary/20 cursor-pointer hover:bg-primary/25 transition-all"
+							>
+								<div className="flex items-center gap-3">
+									<div className="p-2 text-primary-foreground rounded-2xl shadow-primary/20">
+										<span className="material-symbols-outlined">
+											admin_panel_settings
+										</span>
+									</div>
+									<div>
+										<CardTitle className="text-base text-foreground">
+											Admin Panel
+										</CardTitle>
+										<CardDescription className="text-xs text-primary/80 font-medium">
+											Manage users & POIs
+										</CardDescription>
+									</div>
+								</div>
+								<div className="bg-background/20 rounded-full p-1 group-hover:bg-background/30 transition-colors">
+									<span
+										className="material-symbols-outlined text-primary"
+										style={{ fontSize: "20px" }}
+									>
+										arrow_forward
 									</span>
 								</div>
-								<div>
-									<CardTitle className="text-base text-foreground">
-										Admin Panel
-									</CardTitle>
-									<CardDescription className="text-xs text-primary/80 font-medium">
-										Manage users & POIs
-									</CardDescription>
-								</div>
-							</div>
-							<div className="bg-background/20 rounded-full p-1 group-hover:bg-background/30 transition-colors">
-								<span
-									className="material-symbols-outlined text-primary"
-									style={{ fontSize: "20px" }}
-								>
-									arrow_forward
-								</span>
-							</div>
-						</motion.div>
+							</motion.div>
+						</Link>
 					)}
 
 					{/* My Submissions Section */}

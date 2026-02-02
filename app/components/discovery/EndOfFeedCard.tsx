@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface EndOfFeedCardProps {
 	onReset: () => void;
@@ -10,8 +10,6 @@ export default function EndOfFeedCard({
 	onReset,
 	onBackToTop,
 }: EndOfFeedCardProps) {
-	const router = useRouter();
-
 	const handleBackToTop = () => {
 		if (onBackToTop) {
 			onBackToTop();
@@ -47,25 +45,29 @@ export default function EndOfFeedCard({
 				</Button>
 
 				<Button
+					asChild
 					variant="outline"
 					size="lg"
 					className="w-full border-white/10 text-white hover:bg-white/10 h-12 gap-2"
-					onClick={() => router.push("/discovery/map")}
 				>
-					<span className="material-symbols-outlined text-lg">map</span>
-					View on Map
+					<Link href="/discovery/map">
+						<span className="material-symbols-outlined text-lg">map</span>
+						View on Map
+					</Link>
 				</Button>
 
 				<Button
+					asChild
 					variant="ghost"
 					size="lg"
 					className="w-full text-white/70 hover:text-white hover:bg-white/5 h-12 gap-2"
-					onClick={() => router.push("/flag-planting")}
 				>
-					<span className="material-symbols-outlined text-lg">
-						add_location
-					</span>
-					Add a Place
+					<Link href="/flag-planting">
+						<span className="material-symbols-outlined text-lg">
+							add_location
+						</span>
+						Add a Place
+					</Link>
 				</Button>
 
 				<div className="border-t border-white/10 my-1 w-full" />

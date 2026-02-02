@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
+
 import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -16,7 +19,6 @@ export interface BottomNavProps {
 }
 
 export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
-	const router = useRouter();
 	const { isLoaded } = useUser();
 
 	// "Tropical Modernist" Floating Action Button
@@ -38,25 +40,37 @@ export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 		>
 			<GlassSurface className="w-full flex flex-col pointer-events-auto border-x-0 border-b-0 rounded-none rounded-t-2xl">
 				<div className="h-[54px] flex items-center justify-between px-6 gap-2 w-full">
-					<Button
-						variant="ghost"
-						className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 hover:bg-muted/50 transition-colors group"
-						onClick={() => {
-							if (onHomeClick) {
-								onHomeClick();
-							} else {
-								router.push("/");
-							}
-						}}
-					>
-						<div className="relative flex flex-col items-center">
-							<span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform font-variation-settings-filled">
-								home
-							</span>
-							{/* Active Dot Indicator using the Emerald Primary */}
-							<div className="absolute -bottom-2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_var(--color-primary)]"></div>
-						</div>
-					</Button>
+					{onHomeClick ? (
+						<Button
+							variant="ghost"
+							className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 hover:bg-muted/50 transition-colors group"
+							onClick={onHomeClick}
+						>
+							<div className="relative flex flex-col items-center">
+								<span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform font-variation-settings-filled">
+									home
+								</span>
+								{/* Active Dot Indicator using the Emerald Primary */}
+								<div className="absolute -bottom-2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_var(--color-primary)]"></div>
+							</div>
+						</Button>
+					) : (
+						<Button
+							asChild
+							variant="ghost"
+							className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-full p-0 hover:bg-muted/50 transition-colors group"
+						>
+							<Link href="/">
+								<div className="relative flex flex-col items-center">
+									<span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform font-variation-settings-filled">
+										home
+									</span>
+									{/* Active Dot Indicator using the Emerald Primary */}
+									<div className="absolute -bottom-2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_var(--color-primary)]"></div>
+								</div>
+							</Link>
+						</Button>
+					)}
 
 					<Button
 						variant="ghost"
@@ -72,7 +86,7 @@ export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 						<>
 							<SignedIn>
 								<ThinkingLogoButton
-									onClick={() => router.push("/flag-planting")}
+									href="/flag-planting"
 									className={createButtonStyles}
 								/>
 							</SignedIn>
@@ -128,26 +142,29 @@ export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 
 function ProfileButton() {
 	const { user } = useUser();
-	const router = useRouter();
 
 	return (
 		<Button
+			asChild
 			variant="ghost"
-			className="w-8 h-8 rounded-full p-0 overflow-hidden border border-border shadow-sm hover:opacity-80 transition-opacity"
-			onClick={() => router.push("/profile")}
+			className="relative w-8 h-8 rounded-full p-0 overflow-hidden border border-border shadow-sm hover:opacity-80 active:scale-95 transition-all"
 			title="Go to Profile"
 		>
-			{user?.imageUrl ? (
-				<img
-					src={user.imageUrl}
-					alt="Profile"
-					className="w-full h-full object-cover"
-				/>
-			) : (
-				<span className="material-symbols-outlined text-2xl text-muted-foreground">
-					person
-				</span>
-			)}
+			<Link href="/profile">
+				{user?.imageUrl ? (
+					<Image
+						src={user.imageUrl}
+						alt="Profile"
+						width={40}
+						height={40}
+						className="w-full h-full object-cover"
+					/>
+				) : (
+					<span className="material-symbols-outlined text-2xl text-muted-foreground">
+						person
+					</span>
+				)}
+			</Link>
 		</Button>
 	);
 }
