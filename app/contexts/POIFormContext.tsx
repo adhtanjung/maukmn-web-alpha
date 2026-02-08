@@ -148,7 +148,7 @@ export function POIFormProvider({
 				// Include userId to validate ownership when loading
 				localStorage.setItem(
 					"poi-draft",
-					JSON.stringify({ formData, draftId, userId })
+					JSON.stringify({ formData, draftId, userId }),
 				);
 			}, 1000);
 			return () => clearTimeout(timeout);
@@ -231,7 +231,7 @@ export function POIFormProvider({
 				throw new Error(
 					errorData.message ||
 						errorData.error ||
-						`Failed to save: ${response.statusText}`
+						`Failed to save: ${response.statusText}`,
 				);
 			}
 
@@ -295,7 +295,7 @@ export function POIFormProvider({
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 
 			const data = await response.json();
@@ -442,7 +442,7 @@ export function POIFormProvider({
 							Authorization: `Bearer ${token}`,
 						},
 						body: JSON.stringify(payload),
-					}
+					},
 				);
 
 				if (!response.ok) {
@@ -460,7 +460,7 @@ export function POIFormProvider({
 				setIsSaving(false);
 			}
 		},
-		[draftId, form, getToken, API_URL, saveDraft]
+		[draftId, form, getToken, API_URL, saveDraft],
 	);
 
 	// Helper to map and update form values from section data
@@ -484,14 +484,14 @@ export function POIFormProvider({
 					form.setValue("parkingOptions", data.parking_options ?? []);
 					form.setValue(
 						"wheelchairAccessible",
-						data.wheelchair_accessible ?? false
+						data.wheelchair_accessible ?? false,
 					);
 					break;
 				case "operations":
 					form.setValue("openHours", data.open_hours ?? {});
 					form.setValue(
 						"reservationRequired",
-						data.reservation_required ?? false
+						data.reservation_required ?? false,
 					);
 					form.setValue("reservationPlatform", data.reservation_platform ?? "");
 					form.setValue("paymentOptions", data.payment_options ?? []);
@@ -534,7 +534,7 @@ export function POIFormProvider({
 					break;
 			}
 		},
-		[form]
+		[form],
 	);
 
 	const fetchSection = useCallback(
@@ -550,12 +550,12 @@ export function POIFormProvider({
 			try {
 				const token = await getToken();
 				const response = await fetch(
-					`${API_URL}/api/v1/pois/${draftId}/section/${endpoint}`,
+					`${process.env.NEXT_PUBLIC_API_URL}/api/v1/pois/${draftId}/section/${endpoint}?t=${Date.now()}`,
 					{
 						headers: {
 							Authorization: `Bearer ${token}`,
 						},
-					}
+					},
 				);
 
 				if (!response.ok) {
@@ -571,7 +571,7 @@ export function POIFormProvider({
 				console.error(`Fetch ${sectionName} error:`, error);
 			}
 		},
-		[draftId, getToken, API_URL, updateFormFromSection]
+		[draftId, getToken, updateFormFromSection],
 	);
 
 	const resetForm = useCallback(() => {
