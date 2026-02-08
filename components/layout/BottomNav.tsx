@@ -39,7 +39,7 @@ export default function BottomNav({ onHomeClick, className }: BottomNavProps) {
 			)}
 		>
 			<GlassSurface className="w-full flex flex-col pointer-events-auto border-x-0 border-b-0 rounded-none rounded-t-2xl">
-				<div className="h-[54px] flex items-center justify-between px-6 gap-2 w-full">
+				<div className="h-[var(--bottom-nav-inner-height)] flex items-center justify-between px-6 gap-2 w-full">
 					{onHomeClick ? (
 						<Button
 							variant="ghost"

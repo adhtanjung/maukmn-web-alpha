@@ -113,7 +113,7 @@ export function MobileShell({
 					className={cn(
 						"flex-1 min-h-0 overflow-y-auto overscroll-contain",
 						shouldAddBottomPadding &&
-							"pb-[calc(60px+1rem+env(safe-area-inset-bottom))]",
+							"pb-[calc(var(--bottom-nav-height)+1rem+env(safe-area-inset-bottom))]",
 						contentClassName,
 					)}
 				>
