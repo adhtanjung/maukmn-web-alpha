@@ -409,109 +409,102 @@ export default function CreatePOIOverlay({
 				</Button>
 			</div>
 			<div className="px-4">
-				<Tabs
-					value={activeTab}
-					onValueChange={(val) => handleTabChange(val as Tab)}
-					variant="rounded"
-					className="w-full"
-				>
-					<div className="relative">
-						<div
-							className={`absolute left-0 top-0 bottom-0 w-36 bg-linear-to-r from-background to-transparent z-10 pointer-events-none rounded-l-full transition-opacity duration-200 ${
-								showLeftFade ? "opacity-100" : "opacity-0"
-							}`}
-						/>
-						<div
-							className={`absolute right-0 top-0 bottom-0 w-36 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none rounded-r-full transition-opacity duration-200 ${
-								showRightFade ? "opacity-100" : "opacity-0"
-							}`}
-						/>
-						<TabsList ref={tabsListRef}>
-							{/* Tabs Triggers */}
+				<div className="relative">
+					<div
+						className={`absolute left-0 top-0 bottom-0 w-36 bg-linear-to-r from-background to-transparent z-10 pointer-events-none rounded-l-full transition-opacity duration-200 ${
+							showLeftFade ? "opacity-100" : "opacity-0"
+						}`}
+					/>
+					<div
+						className={`absolute right-0 top-0 bottom-0 w-36 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none rounded-r-full transition-opacity duration-200 ${
+							showRightFade ? "opacity-100" : "opacity-0"
+						}`}
+					/>
+					<TabsList ref={tabsListRef}>
+						{/* Tabs Triggers */}
 
-							<TabsTrigger
-								value="profile"
-								ref={(el) => {
-									if (el) tabRefs.current.set("profile", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Profile & Visuals
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="location"
-								ref={(el) => {
-									if (el) tabRefs.current.set("location", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Location
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="workprod"
-								ref={(el) => {
-									if (el) tabRefs.current.set("workprod", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Work & Prod
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="atmosphere"
-								ref={(el) => {
-									if (el) tabRefs.current.set("atmosphere", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Atmosphere
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="fooddrink"
-								ref={(el) => {
-									if (el) tabRefs.current.set("fooddrink", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Food & Drink
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="operations"
-								ref={(el) => {
-									if (el) tabRefs.current.set("operations", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Operations
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="social"
-								ref={(el) => {
-									if (el) tabRefs.current.set("social", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Social
-								</p>
-							</TabsTrigger>
-							<TabsTrigger
-								value="contact"
-								ref={(el) => {
-									if (el) tabRefs.current.set("contact", el);
-								}}
-							>
-								<p className="text-sm font-bold leading-normal tracking-[0.015em]">
-									Contact
-								</p>
-							</TabsTrigger>
-						</TabsList>
-					</div>
-				</Tabs>
+						<TabsTrigger
+							value="profile"
+							ref={(el) => {
+								if (el) tabRefs.current.set("profile", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Profile & Visuals
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="location"
+							ref={(el) => {
+								if (el) tabRefs.current.set("location", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Location
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="workprod"
+							ref={(el) => {
+								if (el) tabRefs.current.set("workprod", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Work & Prod
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="atmosphere"
+							ref={(el) => {
+								if (el) tabRefs.current.set("atmosphere", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Atmosphere
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="fooddrink"
+							ref={(el) => {
+								if (el) tabRefs.current.set("fooddrink", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Food & Drink
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="operations"
+							ref={(el) => {
+								if (el) tabRefs.current.set("operations", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Operations
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="social"
+							ref={(el) => {
+								if (el) tabRefs.current.set("social", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Social
+							</p>
+						</TabsTrigger>
+						<TabsTrigger
+							value="contact"
+							ref={(el) => {
+								if (el) tabRefs.current.set("contact", el);
+							}}
+						>
+							<p className="text-sm font-bold leading-normal tracking-[0.015em]">
+								Contact
+							</p>
+						</TabsTrigger>
+					</TabsList>
+				</div>
 			</div>
 		</div>
 	);
@@ -621,21 +614,22 @@ export default function CreatePOIOverlay({
 	);
 
 	return (
-		<div className="relative w-full h-full bg-background">
-			<MobileShell
-				header={headerContent}
-				footer={footerContent}
-				showBottomNav={false}
-				className="h-full"
-				contentClassName="pb-32"
-			>
-				<div className="h-full">
-					<Suspense fallback={<TabSkeleton />}>
-						<Tabs
-							value={activeTab}
-							variant="rounded"
-							className="w-full h-full flex flex-col"
-						>
+		<Tabs
+			value={activeTab}
+			onValueChange={(val) => handleTabChange(val as Tab)}
+			variant="rounded"
+			className="w-full h-full"
+		>
+			<div className="relative w-full h-full bg-background">
+				<MobileShell
+					header={headerContent}
+					footer={footerContent}
+					showBottomNav={false}
+					className="h-full"
+					contentClassName="pb-32"
+				>
+					<div className="h-full">
+						<Suspense fallback={<TabSkeleton />}>
 							<TabsContent value="profile" className="mt-0">
 								<ProfileVisualsTab />
 							</TabsContent>
@@ -660,10 +654,10 @@ export default function CreatePOIOverlay({
 							<TabsContent value="contact" className="mt-0">
 								<ContactTab />
 							</TabsContent>
-						</Tabs>
-					</Suspense>
-				</div>
-			</MobileShell>
-		</div>
+						</Suspense>
+					</div>
+				</MobileShell>
+			</div>
+		</Tabs>
 	);
 }

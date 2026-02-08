@@ -44,14 +44,17 @@ interface ProfileViewProps {
 const POIListItem = memo(({ poi }: { poi: UserPOI }) => {
 	return (
 		<div className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
-			<div className="flex items-center gap-3 min-w-0 flex-1">
+			<Link
+				href={`/poi/${poi.poi_id}`}
+				className="flex items-center gap-3 min-w-0 flex-1 group/item"
+			>
 				<div className="w-12 h-12 rounded-lg bg-muted shrink-0 overflow-hidden relative">
 					{poi.cover_image_url ? (
 						<Image
 							src={poi.cover_image_url}
 							alt={poi.name}
 							fill
-							className="object-cover"
+							className="object-cover group-hover/item:scale-110 transition-transform duration-300"
 							sizes="48px"
 						/>
 					) : (
@@ -63,7 +66,7 @@ const POIListItem = memo(({ poi }: { poi: UserPOI }) => {
 					)}
 				</div>
 				<div className="min-w-0">
-					<p className="font-semibold text-sm text-foreground truncate">
+					<p className="font-semibold text-sm text-foreground truncate group-hover/item:text-primary transition-colors">
 						{poi.name}
 					</p>
 					<Badge
@@ -75,7 +78,7 @@ const POIListItem = memo(({ poi }: { poi: UserPOI }) => {
 						{poi.status}
 					</Badge>
 				</div>
-			</div>
+			</Link>
 			<Button asChild variant="ghost" size="icon" className="shrink-0">
 				<Link href={`/edit-poi/${poi.poi_id}`}>
 					<span className="material-symbols-outlined text-lg">edit</span>

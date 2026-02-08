@@ -6,6 +6,7 @@ interface ApiPOIData {
 	name: string;
 	brand?: string; // Changed from brand_name
 	category_id?: string; // Changed from categories
+	category_names?: string[]; // Added to match backend's name_key array
 	description?: string;
 	cover_image_url?: string;
 	gallery_image_urls?: string[];
@@ -58,7 +59,9 @@ export function mapApiToFormData(apiData: ApiPOIData): POIFormData {
 	return {
 		name: apiData.name || "",
 		brandName: apiData.brand || "",
-		categories: apiData.category_id ? [apiData.category_id] : [],
+		categories:
+			apiData.category_names ||
+			(apiData.category_id ? [apiData.category_id] : []),
 		description: apiData.description || "",
 		coverImage: apiData.cover_image_url || null,
 		galleryImages: apiData.gallery_image_urls || [],
@@ -69,16 +72,16 @@ export function mapApiToFormData(apiData: ApiPOIData): POIFormData {
 		publicTransport: apiData.public_transport || "",
 		parkingOptions: apiData.parking_options || [], // Check if this maps to amenities or parking_info
 		wheelchairAccessible: apiData.is_wheelchair_accessible || false,
-		wifiQuality: (apiData.wifi_quality as any) || "",
-		powerOutlets: (apiData.power_outlets as any) || "",
+		wifiQuality: (apiData.wifi_quality as POIFormData["wifiQuality"]) || "",
+		powerOutlets: (apiData.power_outlets as POIFormData["powerOutlets"]) || "",
 		seatingOptions: apiData.seating_options || [],
-		noiseLevel: (apiData.noise_level as any) || "",
+		noiseLevel: (apiData.noise_level as POIFormData["noiseLevel"]) || "",
 		hasAC: apiData.has_ac || false,
 		vibes: apiData.vibes || [],
 		crowdType: apiData.crowd_type || [],
-		lighting: (apiData.lighting as any) || "",
+		lighting: (apiData.lighting as POIFormData["lighting"]) || "",
 		musicType: apiData.music_type || "",
-		cleanliness: (apiData.cleanliness as any) || "",
+		cleanliness: (apiData.cleanliness as POIFormData["cleanliness"]) || "",
 		cuisine: apiData.cuisine || "",
 		priceRange: apiData.price_range !== undefined ? apiData.price_range : null,
 		dietaryOptions: apiData.dietary_options || apiData.food_options || [],
